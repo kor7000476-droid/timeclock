@@ -1,0 +1,63 @@
+-- PostgreSQL schema draft for production
+
+CREATE TABLE IF NOT EXISTS employees (
+  id UUID PRIMARY KEY,
+  employee_code VARCHAR(64) NOT NULL UNIQUE,
+  adp_mapping_code VARCHAR(64),
+  name VARCHAR(120) NOT NULL,
+  hire_date DATE NOT NULL,
+  termination_date DATE,
+  title VARCHAR(16) NOT NULL DEFAULT 'STAFF',
+  work_group VARCHAR(16) NOT NULL DEFAULT 'FRONT',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS face_templates (
+  id UUID PRIMARY KEY,
+  employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+  embedding_vector TEXT NOT NULL,
+  quality_score NUMERIC(5,4) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS time_events (
+  id UUID PRIMARY KEY,
+  employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+  event_type VARCHAR(20) NOT NULL CHECK (event_type IN ('CLOCK_IN','CLOCK_OUT','BREAK_START','BREAK_END')),
+  ts_utc TIMESTAMP NOT NULL,
+  device_id VARCHAR(64) NOT NULL,
+  method VARCHAR(20) NOT NULL CHECK (method IN ('FACE','MANUAL','ADMIN_EDIT')),
+  confidence NUMERIC(5,4),
+  note VARCHAR(255),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS time_segments (
+  id UUID PRIMARY KEY,
+  employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+  work_date DATE NOT NULL,
+  start_ts TIMESTAMP NOT NULL,
+  end_ts TIMESTAMP NOT NULL,
+  break_minutes INTEGER NOT NULL DEFAULT 0,
+  total_work_minutes INTEGER NOT NULL,
+  pay_period_id VARCHAR(32) NOT NULL,
+  flags VARCHAR(255),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id UUID PRIMARY KEY,
+  who VARCHAR(120) NOT NULL,
+  action VARCHAR(120) NOT NULL,
+  target_type VARCHAR(60) NOT NULL,
+  target_id UUID NOT NULL,
+  before_json TEXT,
+  after_json TEXT,
+  reason VARCHAR(255),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_time_events_employee_ts ON time_events(employee_id, ts_utc);
+CREATE INDEX IF NOT EXISTS idx_time_segments_employee_date ON time_segments(employee_id, work_date);

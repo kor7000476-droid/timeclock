@@ -1,0 +1,260 @@
+from __future__ import annotations
+
+import os
+import sqlite3
+import threading
+import time
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Optional
+
+from sqlalchemy import delete
+from sqlalchemy.sql import text
+from sqlalchemy.orm import Session
+
+from app.db.models import AuditLog, TimeEvent, TimeSegment
+from app.db.session import SessionLocal, engine
+from app.services.csv_export import build_pay_period_csv
+from app.services.mailer import MailerError, send_csv
+
+
+@dataclass(frozen=True)
+class MaintenanceConfig:
+    retention_days: int = 365
+    backup_hour: int = 3
+    backup_minute: int = 0
+    # Overwritten daily. Can be set to an absolute path in containers (ex: /data/backup).
+    backup_filename: str = os.getenv("BACKUP_FILENAME", "backup")
+    payroll_auto_schedule: str = "SEMIMONTHLY_1_15_16_EOM"
+
+
+_thread_started = False
+
+_K_PAYROLL_AUTO_ENABLED = "payroll_auto_email_enabled"
+_K_PAYROLL_AUTO_TO = "payroll_auto_email_to"
+_K_PAYROLL_AUTO_LAST_END = "payroll_auto_email_last_end"
+_K_PAYROLL_AUTO_LAST_ERROR = "payroll_auto_email_last_error"
+
+
+def _project_root() -> Path:
+    # app/services/maintenance.py -> app/services -> app -> project root
+    return Path(__file__).resolve().parents[2]
+
+def _data_dir() -> Path:
+    """
+    Data directory for runtime artifacts (backup file, lock file).
+    In containers, set DATA_DIR=/data and mount it as a volume.
+    """
+    raw = (os.getenv("DATA_DIR") or "").strip()
+    if raw:
+        try:
+            return Path(raw).resolve()
+        except Exception:
+            pass
+    return _project_root()
+
+
+def _sqlite_db_path() -> Optional[Path]:
+    if engine.url.get_backend_name() != "sqlite":
+        return None
+    db = engine.url.database or ""
+    if not db:
+        return None
+    p = Path(db)
+    if p.is_absolute():
+        return p
+    # DATABASE_URL uses sqlite:///./timeclock.db by default; resolve relative to project root.
+    return (_project_root() / p).resolve()
+
+
+def _backup_path(cfg: MaintenanceConfig) -> Path:
+    p = Path(cfg.backup_filename)
+    if p.is_absolute():
+        return p
+    return (_data_dir() / cfg.backup_filename).resolve()
+
+
+def _next_run_local(cfg: MaintenanceConfig, now_local: datetime) -> datetime:
+    target = now_local.replace(hour=cfg.backup_hour, minute=cfg.backup_minute, second=0, microsecond=0)
+    if now_local >= target:
+        target = target + timedelta(days=1)
+    return target
+
+
+def _run_retention(db: Session, *, cutoff_dt_utc: datetime) -> dict[str, int]:
+    # Timestamps are stored as naive UTC in this MVP.
+    cutoff_date = (cutoff_dt_utc.date())
+
+    deleted_events = db.execute(delete(TimeEvent).where(TimeEvent.ts_utc < cutoff_dt_utc)).rowcount or 0
+    deleted_segments = db.execute(delete(TimeSegment).where(TimeSegment.work_date < cutoff_date)).rowcount or 0
+    deleted_audits = db.execute(delete(AuditLog).where(AuditLog.created_at < cutoff_dt_utc)).rowcount or 0
+    db.commit()
+    return {
+        "time_events": int(deleted_events),
+        "time_segments": int(deleted_segments),
+        "audit_logs": int(deleted_audits),
+    }
+
+def _cfg_get(db: Session, key: str) -> Optional[str]:
+    return db.execute(text("SELECT value FROM app_config WHERE key=:k"), {"k": key}).scalar_one_or_none()
+
+
+def _cfg_set(db: Session, key: str, value: str) -> None:
+    db.execute(
+        text(
+            "INSERT INTO app_config(key, value) VALUES(:k, :v) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value"
+        ),
+        {"k": key, "v": value},
+    )
+
+
+def _latest_closed_semimonthly_period(today_local: date) -> tuple[date, date]:
+    """
+    Returns (start_date, end_date) for the most recently *closed* semi-monthly period:
+    - 1~15
+    - 16~end of month
+    Determined relative to today_local.
+    """
+    if today_local.day <= 15:
+        prev_month_end = (today_local.replace(day=1) - timedelta(days=1))
+        return (prev_month_end.replace(day=16), prev_month_end)
+    return (today_local.replace(day=1), today_local.replace(day=15))
+
+
+def _maybe_send_payroll_auto_email(db: Session, *, cfg: MaintenanceConfig, now_local: datetime) -> None:
+    enabled = (_cfg_get(db, _K_PAYROLL_AUTO_ENABLED) or "").lower() == "true"
+    if not enabled:
+        return
+    to_email = (_cfg_get(db, _K_PAYROLL_AUTO_TO) or "").strip()
+    if not to_email:
+        return
+
+    if cfg.payroll_auto_schedule != "SEMIMONTHLY_1_15_16_EOM":
+        return
+
+    start_d, end_d = _latest_closed_semimonthly_period(now_local.date())
+    last_end = (_cfg_get(db, _K_PAYROLL_AUTO_LAST_END) or "").strip()
+    if last_end == end_d.isoformat():
+        return
+
+    try:
+        csv_text = build_pay_period_csv(db, start_d, end_d)
+        filename = f"adp_pay_period_{start_d}_{end_d}.csv"
+        sent_at = now_local.strftime("%Y-%m-%d %H:%M:%S ET")
+        send_csv(
+            to_email=to_email,
+            subject=f"ADP CSV {start_d} ~ {end_d} (AUTO) ({sent_at})",
+            body=(
+                "Attached is the ADP upload CSV generated by Timeclock.\n"
+                f"Schedule: {cfg.payroll_auto_schedule}\n"
+                f"Period: {start_d} ~ {end_d}\n"
+                f"Sent at: {sent_at}\n"
+            ),
+            filename=filename,
+            content=csv_text,
+        )
+        _cfg_set(db, _K_PAYROLL_AUTO_LAST_END, end_d.isoformat())
+        _cfg_set(db, _K_PAYROLL_AUTO_LAST_ERROR, "")
+        db.add(
+            AuditLog(
+                who="system",
+                action="AUTO_EMAIL_PAY_PERIOD",
+                target_type="report",
+                target_id=end_d.isoformat(),
+                before_json=None,
+                after_json=None,
+                reason=f"{start_d}~{end_d} to {to_email}",
+            )
+        )
+        db.commit()
+    except MailerError as exc:
+        _cfg_set(db, _K_PAYROLL_AUTO_LAST_ERROR, str(exc)[:400])
+        db.commit()
+    except Exception as exc:
+        _cfg_set(db, _K_PAYROLL_AUTO_LAST_ERROR, f"{exc}"[:400])
+        db.commit()
+
+
+
+def _run_sqlite_backup(src_db: Path, dest_file: Path) -> None:
+    dest_file.parent.mkdir(parents=True, exist_ok=True)
+    if dest_file.exists():
+        # Ensure we truly overwrite a single "backup" file as requested.
+        dest_file.unlink()
+    # Use SQLite's online backup API for a consistent snapshot.
+    with sqlite3.connect(str(src_db)) as src:
+        with sqlite3.connect(str(dest_file)) as dst:
+            src.backup(dst)
+            dst.execute("PRAGMA wal_checkpoint(FULL)")
+
+
+def _lock_file_path() -> Path:
+    return (_data_dir() / ".maintenance.lock").resolve()
+
+
+def _acquire_lock() -> Optional[object]:
+    """
+    Best-effort single-instance guard (useful with uvicorn --reload).
+    Returns the open file handle if lock acquired.
+    """
+    try:
+        import fcntl  # macOS/Linux only
+    except Exception:
+        return None
+
+    lock_path = _lock_file_path()
+    fh = open(lock_path, "a+")
+    try:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        fh.close()
+        return None
+    return fh
+
+
+def _maintenance_worker(cfg: MaintenanceConfig) -> None:
+    lock_fh = _acquire_lock()
+    if lock_fh is None and os.name != "nt":
+        # Another process is already running maintenance.
+        return
+
+    # One-time cleanup at start: enforce retention immediately.
+    try:
+        with SessionLocal() as db:
+            cutoff = datetime.utcnow() - timedelta(days=cfg.retention_days)
+            _run_retention(db, cutoff_dt_utc=cutoff)
+    except Exception:
+        # Keep the worker alive; next run may succeed.
+        pass
+
+    while True:
+        now_local = datetime.now()
+        next_run = _next_run_local(cfg, now_local)
+        sleep_s = max(1.0, (next_run - now_local).total_seconds())
+        time.sleep(sleep_s)
+
+        try:
+            with SessionLocal() as db:
+                cutoff = datetime.utcnow() - timedelta(days=cfg.retention_days)
+                _run_retention(db, cutoff_dt_utc=cutoff)
+                _maybe_send_payroll_auto_email(db, cfg=cfg, now_local=datetime.now())
+
+            src = _sqlite_db_path()
+            if src is not None and src.exists():
+                _run_sqlite_backup(src, _backup_path(cfg))
+        except Exception:
+            # Swallow errors; try again next day.
+            continue
+
+
+def start_maintenance(cfg: Optional[MaintenanceConfig] = None) -> None:
+    global _thread_started
+    if _thread_started:
+        return
+    _thread_started = True
+
+    _cfg = cfg or MaintenanceConfig()
+    t = threading.Thread(target=_maintenance_worker, args=(_cfg,), daemon=True, name="maintenance")
+    t.start()

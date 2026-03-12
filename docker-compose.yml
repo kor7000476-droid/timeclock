@@ -1,0 +1,32 @@
+services:
+  timeclock:
+    build: .
+    image: timeclock-mvp:latest
+    container_name: timeclock-mvp
+    restart: unless-stopped
+    ports:
+      - "18010:8010"
+    volumes:
+      - ./data:/data
+    environment:
+      # Data persistence (SQLite + daily backup file)
+      DATA_DIR: /data
+      DATABASE_URL: sqlite:////data/timeclock.db
+      BACKUP_FILENAME: /data/backup
+
+      # App branding / kiosk identity (optional)
+      APP_NAME: "Timeclock"
+      KIOSK_DEVICE_ID: "ipad-kiosk-1"
+
+      # Admin PIN (set this)
+      ADMIN_PIN: "1234"
+
+      # SMTP (set these if you want email)
+      SMTP_HOST: ""
+      SMTP_PORT: "587"
+      SMTP_USER: ""
+      SMTP_PASSWORD: ""
+      SMTP_USE_TLS: "true"
+      MAIL_FROM: ""
+      MAIL_BCC: ""
+

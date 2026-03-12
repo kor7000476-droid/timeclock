@@ -1,0 +1,122 @@
+from __future__ import annotations
+
+import csv
+import io
+from datetime import date, timedelta
+
+from sqlalchemy import and_, select
+from sqlalchemy.orm import Session
+
+from app.db.models import Employee, TimeEvent
+from app.core.tz import eastern_date_range_to_utc_naive
+from app.services.aggregation import summarize_employee_events
+
+
+def build_pay_period_csv(db: Session, start_date: date, end_date: date) -> str:
+    """
+    ADP upload CSV for a pay period (often 2 weeks).
+
+    - ASCII-only headers/values (no Korean text).
+    - One row per employee per earning_code (REG, OT).
+    - Overtime is computed weekly at 40h/week, in 7-day blocks starting at start_date.
+      (Assumes start_date aligns with the employer's defined workweek boundary.)
+    - Minutes are based on summarize_employee_events() totals (breaks excluded).
+    """
+    rows: list[dict[str, object]] = []
+    # Include recently-terminated employees for a grace period (termination_date + 14 days),
+    # so their final pay period can still be exported/sent. After that, exclude them from
+    # payroll CSV outputs (they remain visible in admin query screens).
+    employees = db.execute(select(Employee)).scalars().all()
+    eligible: list[Employee] = []
+    for e in employees:
+        term = getattr(e, "termination_date", None)
+        if term is None:
+            eligible.append(e)
+            continue
+        try:
+            cutoff = term + timedelta(days=14)
+        except Exception:
+            # If stored as a string unexpectedly, be conservative and include.
+            eligible.append(e)
+            continue
+        if end_date <= cutoff:
+            eligible.append(e)
+
+    utc_start, utc_end = eastern_date_range_to_utc_naive(start_date, end_date)
+    minutes_per_week = 40 * 60
+    for employee in eligible:
+        events = (
+            db.execute(
+                select(TimeEvent).where(
+                    and_(
+                        TimeEvent.employee_id == employee.id,
+                        TimeEvent.ts_utc >= utc_start,
+                        TimeEvent.ts_utc < utc_end,
+                    )
+                ).order_by(TimeEvent.ts_utc)
+            )
+            .scalars()
+            .all()
+        )
+
+        summaries = summarize_employee_events(employee.id, events)
+        # Weekly OT split (7-day blocks starting at start_date).
+        weekly_totals: dict[int, int] = {}
+        for s in summaries:
+            idx = (s.work_date - start_date).days // 7
+            if idx < 0:
+                continue
+            weekly_totals[idx] = weekly_totals.get(idx, 0) + int(s.total_work_minutes or 0)
+
+        reg_minutes = 0
+        ot_minutes = 0
+        for _, wk_minutes in sorted(weekly_totals.items(), key=lambda kv: kv[0]):
+            wk_minutes = max(int(wk_minutes or 0), 0)
+            reg_minutes += min(wk_minutes, minutes_per_week)
+            ot_minutes += max(0, wk_minutes - minutes_per_week)
+
+        if reg_minutes == 0 and ot_minutes == 0:
+            continue
+
+        common = {
+            "employee_code": employee.employee_code,
+            "adp_mapping_code": employee.adp_mapping_code or "",
+            "pay_period_start": start_date.isoformat(),
+            "pay_period_end": end_date.isoformat(),
+        }
+
+        if reg_minutes:
+            rows.append(
+                {
+                    **common,
+                    "earning_code": "REG",
+                    "work_minutes": reg_minutes,
+                    "work_hours": round(reg_minutes / 60, 2),
+                }
+            )
+        if ot_minutes:
+            rows.append(
+                {
+                    **common,
+                    "earning_code": "OT",
+                    "work_minutes": ot_minutes,
+                    "work_hours": round(ot_minutes / 60, 2),
+                }
+            )
+
+    output = io.StringIO()
+    writer = csv.DictWriter(
+        output,
+        fieldnames=[
+            "employee_code",
+            "adp_mapping_code",
+            "pay_period_start",
+            "pay_period_end",
+            "earning_code",
+            "work_minutes",
+            "work_hours",
+        ],
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+    return output.getvalue()
