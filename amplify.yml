@@ -3,7 +3,7 @@ frontend:
   phases:
     build:
       commands:
-        - echo "Static deploy"
+        - echo "static site"
   artifacts:
     baseDirectory: web
     files:
