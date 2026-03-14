@@ -695,6 +695,20 @@
       background: #9ca3af;
       color: #fff;
     }
+    #face-modal-backdrop #face-capture-btn {
+      background: #2563eb !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 12px !important;
+      font-weight: 800;
+      font-size: 15px;
+      min-height: 44px;
+      padding: 10px 16px;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.24);
+    }
+    #face-modal-backdrop #face-capture-btn:active {
+      transform: translateY(1px);
+    }
     .summary-box {
       border: 1px solid #e2e8f0;
       background: #f8fafc;
@@ -1269,7 +1283,7 @@
       <h3 data-i18n-admin="a_employee_edit_title">직원 수정</h3>
       <div class="row" style="align-items:center;">
         <div class="pill" id="emp-edit-code" style="font-weight:800;"></div>
-        <button id="emp-edit-face-btn" class="mini-btn face-enroll-btn" onclick="openFaceModal(window._empEditCode || '')" data-i18n-admin="a_btn_face_enroll">얼굴 등록</button>
+        <button id="emp-edit-face-btn" class="mini-btn face-enroll-btn" onclick="showFaceEnrollFromListOnlyHint()" data-i18n-admin="a_btn_face_enroll">얼굴 등록</button>
       </div>
       <div class="row">
         <input id="emp-edit-name" class="mini-input" maxlength="15" placeholder="이름" data-i18n-admin-ph="a_ph_emp_name" style="min-width: 180px;" />
@@ -1319,11 +1333,13 @@
 	      <h3 data-i18n-admin="a_face_title">얼굴 등록 (5회 이상 캡처 권장: 앞/위/아래/좌/우)</h3>
 	      <p class="muted" data-i18n-admin="a_face_help">샘플 5개가 캡처되면 자동으로 저장됩니다. (5개 미만은 저장되지 않습니다.)</p>
 	      <div class="row">
-	        <select id="face-employee"></select>
-	        <button class="sub-btn" onclick="captureFaceSample()" data-i18n-admin="a_btn_sample_capture">샘플 캡처</button>
-	        <button class="admin-btn" onclick="saveFaceSamples()" data-i18n-admin="a_btn_face_save">얼굴 등록 저장</button>
+	        <input id="face-employee-label" class="mini-input" type="text" readonly />
+	        <input id="face-employee" type="hidden" />
+	        <button id="face-capture-btn" class="sub-btn" onclick="captureFaceSample()" data-i18n-admin="a_btn_sample_capture">샘플 캡처</button>
+	        <button id="face-retry-save-btn" class="admin-btn hidden" onclick="saveFaceSamples(false)" data-i18n-admin="a_btn_face_retry_save">재저장</button>
 	        <button class="sub-btn" onclick="closeFaceModal()" data-i18n-admin="a_btn_close">닫기</button>
 	      </div>
+	      <div class="muted" id="face-selected-context"></div>
 	      <video id="admin-camera" autoplay playsinline muted></video>
 	      <div class="muted" id="admin-camera-status" data-i18n-admin="a_camera_live">관리자 얼굴 등록용 실시간 카메라</div>
 	      <div id="face-msg" class="status"></div>
@@ -1368,12 +1384,15 @@
           const OFFLINE_META_STORE = 'offline_meta';
           const OFFLINE_FACE_SNAPSHOT_KEY = 'timeclock_offline_face_cache_v1';
           const OFFLINE_SYNC_INTERVAL_MS = 20000;
-          const OFFLINE_ALERT_INTERVAL_MS = 10 * 60 * 1000;
-          const OFFLINE_ALERT_SECONDS = 5;
-          const OFFLINE_FACE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
-          const FACE_MATCH_THRESHOLD = 0.53;
-          const OFFLINE_LOCAL_THRESHOLD_DEFAULT = FACE_MATCH_THRESHOLD;
-          const OFFLINE_AMBIGUOUS_MARGIN = 0.015;
+	          const OFFLINE_ALERT_INTERVAL_MS = 10 * 60 * 1000;
+	          const OFFLINE_ALERT_SECONDS = 5;
+          const OFFLINE_ALERT_MIN_DOWN_MS = 5000;
+	          const OFFLINE_FACE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+          const OFFLINE_FAIL_THRESHOLD = 2;
+          const OFFLINE_RECOVER_THRESHOLD = 2;
+	          const FACE_MATCH_THRESHOLD = 0.53;
+	          const OFFLINE_LOCAL_THRESHOLD_DEFAULT = FACE_MATCH_THRESHOLD;
+	          const OFFLINE_AMBIGUOUS_MARGIN = 0.015;
           const LOCAL_STATUS_KEY = 'timeclock_local_status_v1';
 
 	    let kioskStarted = false;
@@ -1386,10 +1405,14 @@
           let offlineFaceCache = [];
           let offlineFaceThreshold = OFFLINE_LOCAL_THRESHOLD_DEFAULT;
           let offlineAlertTimer = null;
-          let offlineAlertCountdownTimer = null;
-          let offlineAlertRemaining = 0;
-          let offlineFaceLastRefreshMs = 0;
-          let localStatusByEmployee = {};
+	          let offlineAlertCountdownTimer = null;
+          let offlineAlertDelayTimer = null;
+	          let offlineAlertRemaining = 0;
+          let offlineSinceMs = 0;
+	          let offlineFaceLastRefreshMs = 0;
+	          let localStatusByEmployee = {};
+          let offlineFailCount = 0;
+          let offlineRecoverCount = 0;
 
 	    let adminPin = '';
 	    let faceSamples = [];
@@ -1766,8 +1789,32 @@
       offlineAlertRemaining = 0;
     }
 
+    function clearOfflineAlertDelayTimer() {
+      if (offlineAlertDelayTimer) {
+        clearTimeout(offlineAlertDelayTimer);
+        offlineAlertDelayTimer = null;
+      }
+    }
+
+    function getOfflineDurationMs() {
+      if (!offlineMode || !offlineSinceMs) return 0;
+      return Math.max(0, Date.now() - offlineSinceMs);
+    }
+
+    function scheduleOfflineAlertPopup() {
+      clearOfflineAlertDelayTimer();
+      if (!offlineMode) return;
+      const remainingMs = Math.max(0, OFFLINE_ALERT_MIN_DOWN_MS - getOfflineDurationMs());
+      offlineAlertDelayTimer = setTimeout(() => {
+        offlineAlertDelayTimer = null;
+        if (!offlineMode) return;
+        showOfflineAlertPopup();
+      }, remainingMs);
+    }
+
     function showOfflineAlertPopup() {
       if (!offlineMode) return;
+      if (getOfflineDurationMs() < OFFLINE_ALERT_MIN_DOWN_MS) return;
       const backdrop = document.getElementById('offline-alert-backdrop');
       if (!backdrop) return;
       const titleEl = document.getElementById('offline-alert-title');
@@ -1803,21 +1850,28 @@
         clearInterval(offlineAlertTimer);
         offlineAlertTimer = null;
       }
+      clearOfflineAlertDelayTimer();
       hideOfflineAlertPopup();
     }
 
     async function setOfflineMode(nextOffline) {
       const changed = offlineMode !== !!nextOffline;
       offlineMode = !!nextOffline;
+      if (changed && offlineMode) {
+        offlineSinceMs = Date.now();
+      }
+      if (changed && !offlineMode) {
+        offlineSinceMs = 0;
+      }
       if (offlineMode && offlineFaceCache.length === 0) {
         await ensureOfflineFaceCacheReady();
       }
-      if (offlineMode) startOfflineAlertLoop();
+      if (offlineMode) {
+        startOfflineAlertLoop();
+        if (changed) scheduleOfflineAlertPopup();
+      }
       else stopOfflineAlertLoop();
       renderOfflineStatus();
-      if (changed && offlineMode) {
-        showOfflineAlertPopup();
-      }
       if (changed && !offlineMode) {
         setText('event-toast', t('k_offline_synced'));
       }
@@ -1873,23 +1927,24 @@
       renderOfflineStatus();
       try {
         const items = await idbGetAllByCreatedAt(OFFLINE_EVENTS_STORE);
-        for (const item of items) {
-          const sent = await postEventOnline(item);
-          if (!sent.ok) {
-            if (sent.retriable) {
-              await setOfflineMode(true);
-              break;
-            }
-            setText('event-toast', `${t('k_offline_sync_failed')} (${sent.error})`, true);
-            await idbDelete(OFFLINE_EVENTS_STORE, item.event_uuid);
-            offlineQueueCount = Math.max(0, offlineQueueCount - 1);
-            renderOfflineStatus();
-            continue;
-          }
-          await idbDelete(OFFLINE_EVENTS_STORE, item.event_uuid);
-          offlineQueueCount = Math.max(0, offlineQueueCount - 1);
-          renderOfflineStatus();
-        }
+	        for (const item of items) {
+	          const sent = await postEventOnline(item);
+	          if (!sent.ok) {
+	            if (sent.retriable) {
+	              await updateOfflineStateByProbe(false, 'sync');
+	              break;
+	            }
+	            setText('event-toast', `${t('k_offline_sync_failed')} (${sent.error})`, true);
+	            await idbDelete(OFFLINE_EVENTS_STORE, item.event_uuid);
+	            offlineQueueCount = Math.max(0, offlineQueueCount - 1);
+	            renderOfflineStatus();
+	            continue;
+	          }
+	          await updateOfflineStateByProbe(true, 'sync');
+	          await idbDelete(OFFLINE_EVENTS_STORE, item.event_uuid);
+	          offlineQueueCount = Math.max(0, offlineQueueCount - 1);
+	          renderOfflineStatus();
+	        }
       } catch (err) {
         setText('event-toast', `${t('k_offline_sync_failed')} (${normalizeFetchError(err)})`, true);
       } finally {
@@ -1898,12 +1953,30 @@
       }
     }
 
-    async function checkApiHealthOnline() {
-      try {
-        const res = await fetch('/api/health', { method: 'GET', cache: 'no-store' });
-        return !!res.ok;
-      } catch (_) {
-        return false;
+	    async function checkApiHealthOnline() {
+	      try {
+	        const res = await fetch('/api/health', { method: 'GET', cache: 'no-store' });
+	        return !!res.ok;
+	      } catch (_) {
+	        return false;
+	      }
+	    }
+
+    async function updateOfflineStateByProbe(ok, source = 'health') {
+      const browserOffline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+      if (ok) {
+        offlineFailCount = 0;
+        offlineRecoverCount += 1;
+        if (offlineMode && (source === 'browser' || offlineRecoverCount >= OFFLINE_RECOVER_THRESHOLD)) {
+          await setOfflineMode(false);
+        }
+        return;
+      }
+      offlineRecoverCount = 0;
+      offlineFailCount += 1;
+      const shouldForceOffline = source === 'browser' || browserOffline;
+      if (!offlineMode && (shouldForceOffline || offlineFailCount >= OFFLINE_FAIL_THRESHOLD)) {
+        await setOfflineMode(true);
       }
     }
 
@@ -2074,38 +2147,42 @@
       };
     }
 
-    async function runOfflineHealthLoop() {
-      if (offlineSyncTimer) clearInterval(offlineSyncTimer);
-      offlineSyncTimer = setInterval(async () => {
-        const ok = await checkApiHealthOnline();
-        await setOfflineMode(!ok);
-        if (ok) {
-          await syncQueuedEvents();
-          if ((Date.now() - offlineFaceLastRefreshMs) >= OFFLINE_FACE_REFRESH_INTERVAL_MS) {
-            await refreshOfflineFaceCacheFromServer();
-          }
+	    async function runOfflineHealthLoop() {
+	      if (offlineSyncTimer) clearInterval(offlineSyncTimer);
+	      offlineSyncTimer = setInterval(async () => {
+	        const ok = await checkApiHealthOnline();
+	        await updateOfflineStateByProbe(ok, 'health');
+	        if (ok) {
+	          await syncQueuedEvents();
+	          if ((Date.now() - offlineFaceLastRefreshMs) >= OFFLINE_FACE_REFRESH_INTERVAL_MS) {
+	            await refreshOfflineFaceCacheFromServer();
+	          }
         }
       }, OFFLINE_SYNC_INTERVAL_MS);
     }
 
-    async function initializeOfflineSubsystem() {
-      loadLocalStatusMap();
-      try { await openOfflineDb(); } catch (_) {}
-      await loadOfflineQueueCount();
-      const healthy = await checkApiHealthOnline();
-      await setOfflineMode(!healthy);
-      await warmOfflineFaceCache();
-      if (healthy) await syncQueuedEvents();
-      await runOfflineHealthLoop();
-      window.addEventListener('online', async () => {
-        await setOfflineMode(false);
-        await syncQueuedEvents();
-        await refreshOfflineFaceCacheFromServer();
-      });
-      window.addEventListener('offline', async () => {
-        await setOfflineMode(true);
-      });
-    }
+	    async function initializeOfflineSubsystem() {
+	      loadLocalStatusMap();
+	      try { await openOfflineDb(); } catch (_) {}
+	      await loadOfflineQueueCount();
+	      const healthy = await checkApiHealthOnline();
+	      await updateOfflineStateByProbe(healthy, 'startup');
+	      await warmOfflineFaceCache();
+	      if (healthy) await syncQueuedEvents();
+	      await runOfflineHealthLoop();
+	      window.addEventListener('online', async () => {
+	        offlineFailCount = 0;
+	        offlineRecoverCount = OFFLINE_RECOVER_THRESHOLD;
+	        await setOfflineMode(false);
+	        await syncQueuedEvents();
+	        await refreshOfflineFaceCacheFromServer();
+	      });
+	      window.addEventListener('offline', async () => {
+	        offlineRecoverCount = 0;
+	        offlineFailCount = OFFLINE_FAIL_THRESHOLD;
+	        await updateOfflineStateByProbe(false, 'browser');
+	      });
+	    }
 
     const ADMIN_I18N = {
       ko: {
@@ -2208,6 +2285,7 @@
         a_face_help: '샘플 5개가 캡처되면 자동으로 저장됩니다. (5개 미만은 저장되지 않습니다.)',
         a_btn_sample_capture: '샘플 캡처',
         a_btn_face_save: '얼굴 등록 저장',
+        a_btn_face_retry_save: '재저장',
         a_btn_face_enroll: '얼굴등록',
         a_camera_live: '관리자 얼굴 등록용 실시간 카메라',
         a_msg_hire_required: '입사일은 필수입니다.',
@@ -2220,7 +2298,7 @@
         a_msg_employee_fetch_failed: '직원 조회 실패',
         a_msg_saved: '저장 완료',
         a_msg_face_saving: '저장 중입니다. 잠시만 기다려주세요.',
-        a_msg_face_already_captured: '이미 5개 샘플이 캡처되었습니다. 저장이 지연되면 “얼굴 등록 저장”을 다시 누르거나, 창을 닫고 다시 캡처하세요.',
+        a_msg_face_already_captured: '이미 5개 샘플이 캡처되었습니다. 자동 저장이 지연되면 표시된 “재저장” 버튼으로 다시 시도하세요.',
         a_msg_face_not_detected: '얼굴이 감지되지 않았습니다. 카메라 프리뷰를 보고 정면으로 다시 시도하세요.',
         a_msg_face_low_quality: '얼굴 품질이 낮습니다. 밝은 곳에서 정면으로 다시 캡처하세요.',
         a_msg_face_too_similar: '직전 샘플과 너무 유사합니다. 고개를 약간 돌린 뒤 다시 캡처하세요.',
@@ -2229,6 +2307,7 @@
         a_msg_face_auto_saving: '샘플 5개 캡처 완료. 자동 저장 중…',
         a_msg_saving: '저장 중…',
         a_msg_face_register_failed: '얼굴 등록 실패',
+        a_msg_face_retry_visible: '자동 저장이 실패했습니다. “재저장” 버튼으로 다시 시도하세요.',
         a_alert_face_ok: '얼굴 등록이 정상 처리되었습니다.',
         a_msg_choose_xlsx: '업로드할 .xlsx 파일을 선택하세요.',
         a_msg_excel_upload_failed: '엑셀 업로드 실패',
@@ -2362,6 +2441,7 @@
         a_face_help: 'Auto-saves when 5 samples are captured. (Saving is blocked until all 5 are captured.)',
         a_btn_sample_capture: 'Capture Sample',
         a_btn_face_save: 'Save Face',
+        a_btn_face_retry_save: 'Retry Save',
         a_btn_face_enroll: 'Face Enroll',
         a_camera_live: 'Live camera preview for face enrollment',
         a_msg_hire_required: 'Hire date is required.',
@@ -2374,7 +2454,7 @@
         a_msg_employee_fetch_failed: 'Failed to load employees',
         a_msg_saved: 'Saved',
         a_msg_face_saving: 'Saving... Please wait.',
-        a_msg_face_already_captured: 'Already captured 5 samples. If saving is delayed, press “Save Face” again or close and recapture.',
+        a_msg_face_already_captured: 'Already captured 5 samples. If auto-save is delayed, use the visible “Retry Save” button.',
         a_msg_face_not_detected: 'No face detected. Please face the camera and try again.',
         a_msg_face_low_quality: 'Face quality is low. Move to brighter light and face the camera.',
         a_msg_face_too_similar: 'Too similar to the previous sample. Slightly turn your head and try again.',
@@ -2383,6 +2463,7 @@
         a_msg_face_auto_saving: 'Captured 5 samples. Auto-saving...',
         a_msg_saving: 'Saving...',
         a_msg_face_register_failed: 'Face enrollment failed',
+        a_msg_face_retry_visible: 'Auto-save failed. Please retry with “Retry Save”.',
         a_alert_face_ok: 'Face enrollment completed successfully.',
         a_msg_choose_xlsx: 'Please choose a .xlsx file to upload.',
         a_msg_excel_upload_failed: 'Excel upload failed',
@@ -2556,7 +2637,21 @@
         : `Saved templates for ${employeeCode} (${templateCount})`;
     }
 
-    function scheduleFaceModalAutoClose(ms = 10000) {
+    function hideFaceRetrySaveButton() {
+      const btn = document.getElementById('face-retry-save-btn');
+      if (!btn) return;
+      btn.classList.add('hidden');
+      btn.disabled = false;
+    }
+
+    function showFaceRetrySaveButton() {
+      const btn = document.getElementById('face-retry-save-btn');
+      if (!btn) return;
+      btn.classList.remove('hidden');
+      btn.disabled = false;
+    }
+
+	    function scheduleFaceModalAutoClose(ms = 10000) {
       try {
         if (faceAutoCloseTimer) clearTimeout(faceAutoCloseTimer);
         faceAutoCloseTimer = setTimeout(() => {
@@ -2567,32 +2662,120 @@
       } catch (_) {
         // ignore
       }
+	    }
+
+    function updateFaceEmployeeContext(forcedCode = null) {
+      const infoEl = document.getElementById('face-selected-context');
+      const codeEl = document.getElementById('face-employee');
+      const labelEl = document.getElementById('face-employee-label');
+      if (!infoEl || !codeEl) return;
+      const selectedCode = String(forcedCode || codeEl.value || '').trim();
+      if (!selectedCode) {
+        codeEl.value = '';
+        if (labelEl) labelEl.value = '';
+        infoEl.textContent = adminLang() === 'ko' ? '직원 선택 필요' : 'Select an employee';
+        return;
+      }
+      const row = (adminEmployees || []).find((item) => String(item.employee_code || '') === selectedCode);
+      if (!row) {
+        codeEl.value = '';
+        if (labelEl) labelEl.value = '';
+        infoEl.textContent = adminLang() === 'ko'
+          ? `컨텍스트 로드 실패: ${selectedCode}`
+          : `Context load failed: ${selectedCode}`;
+        return;
+      }
+      codeEl.value = String(row.employee_code || '');
+      if (labelEl) {
+        labelEl.value = `${row.name || '-'} (${row.employee_code})`;
+      }
+      const templateCount = Number(row.face_template_count || 0);
+      const templateStatus = templateCount >= FACE_ENROLL_DONE_THRESHOLD
+        ? (adminLang() === 'ko' ? '등록완료' : 'Enrolled')
+        : (adminLang() === 'ko' ? '등록필요' : 'Need enrollment');
+      const activeStatus = row.termination_date
+        ? (adminLang() === 'ko' ? `퇴사 ${row.termination_date}` : `Terminated ${row.termination_date}`)
+        : (row.is_active ? (adminLang() === 'ko' ? '활성' : 'Active') : (adminLang() === 'ko' ? '비활성' : 'Inactive'));
+      const templateLabel = adminLang() === 'ko' ? '템플릿' : 'Templates';
+      infoEl.textContent = `${row.employee_code} | ${row.name || '-'} | ${templateLabel} ${templateCount} | ${templateStatus} | ${activeStatus}`;
     }
 
-    function openFaceModal(employeeCode = null) {
-      if (!adminPin) {
-        setText('admin-lock-msg', tAdmin('a_msg_admin_required'), true);
+    function selectFaceEmployeeContext(employeeCode = '') {
+      const codeEl = document.getElementById('face-employee');
+      if (!codeEl) return false;
+      const target = String(employeeCode || '').trim();
+      if (!target) {
+        updateFaceEmployeeContext('');
+        return false;
+      }
+      updateFaceEmployeeContext(target);
+      return String(codeEl.value || '') === target;
+    }
+
+    function showFaceEnrollFromListOnlyHint() {
+      setText(
+        'employee-edit-msg',
+        adminLang() === 'ko'
+          ? '얼굴 등록은 직원 조회/수정 목록의 해당 직원 “얼굴 등록” 버튼에서만 진행할 수 있습니다.'
+          : 'Face enrollment is available only from the selected employee row in Employee Manage.',
+        true
+      );
+    }
+
+    function openFaceModalFromManageRow(employeeCode) {
+      openFaceModal(employeeCode, 'manage_row');
+    }
+
+	    function openFaceModal(employeeCode = null, source = 'unknown') {
+	      if (!adminPin) {
+	        setText('admin-lock-msg', tAdmin('a_msg_admin_required'), true);
+	        return;
+	      }
+      if (source !== 'manage_row') {
+        setText(
+          'employee-manage-msg',
+          adminLang() === 'ko'
+            ? '얼굴 등록은 직원 조회/수정 목록의 해당 직원 버튼에서만 열 수 있습니다.'
+            : 'Open face enrollment only from the selected employee row in Employee Manage.',
+          true
+        );
         return;
       }
       if (faceAutoCloseTimer) {
         clearTimeout(faceAutoCloseTimer);
         faceAutoCloseTimer = null;
       }
-      document.getElementById('face-msg').textContent = '';
+	      document.getElementById('face-msg').textContent = '';
       faceSamples = [];
       faceSaving = false;
+      hideFaceRetrySaveButton();
       document.getElementById('face-sample-count').textContent = adminSampleCountText(0);
       document.getElementById('face-modal-backdrop').classList.remove('hidden');
       // Ensure the shared camera stream is visible/playing inside the modal.
       syncAdminCamera();
-      setTimeout(() => {
-        const sel = document.getElementById('face-employee');
-        if (sel && employeeCode) {
-          sel.value = employeeCode;
-        }
-        if (sel) sel.focus();
-      }, 50);
-    }
+      const targetCode = String(employeeCode || '').trim();
+      if (!targetCode) {
+        setText(
+          'face-msg',
+          adminLang() === 'ko' ? '직원 컨텍스트가 없습니다. 직원 목록에서 다시 선택하세요.' : 'Missing employee context. Please open from employee list.',
+          true
+        );
+        return;
+      }
+      renderFaceEmployeeSelect(targetCode);
+      const contextLoaded = selectFaceEmployeeContext(targetCode);
+      if (!contextLoaded && targetCode) {
+        setText(
+          'face-msg',
+          adminLang() === 'ko'
+            ? `직원 컨텍스트를 찾지 못했습니다: ${targetCode}`
+            : `Could not load employee context: ${targetCode}`,
+          true
+        );
+      }
+      const captureBtn = document.querySelector('#face-modal-backdrop button[onclick="captureFaceSample()"]');
+      if (captureBtn) captureBtn.focus();
+	    }
 
     function closeFaceModal() {
       document.getElementById('face-modal-backdrop').classList.add('hidden');
@@ -2608,6 +2791,7 @@
       }
       faceSamples = [];
       faceSaving = false;
+      hideFaceRetrySaveButton();
       const c = document.getElementById('face-sample-count');
       if (c) c.textContent = adminSampleCountText(0);
     }
@@ -3238,9 +3422,10 @@
 	        };
 	        recognizedAt = Date.now();
 	        lastFaceSeenAt = recognizedAt;
-	        const statusText = source === 'offline'
-	          ? `${t('k_offline_match_mode')} · ${t('k_verified_press')}`
-	          : t('k_verified_press');
+		        const showOfflineLabel = source === 'offline' || (source === 'fallback' && offlineMode);
+		        const statusText = showOfflineLabel
+		          ? `${t('k_offline_match_mode')} · ${t('k_verified_press')}`
+		          : t('k_verified_press');
 	        document.getElementById('scan-status').textContent = statusText;
 	      } else {
 	        recognized = null;
@@ -3306,25 +3491,26 @@
         return;
       }
 
-      try {
-        const res = await fetch('/api/identify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ embedding: result.descriptor, threshold: FACE_MATCH_THRESHOLD }),
-        });
-        const text = await res.text();
-        const data = safeJsonParse(text, {});
-        if (!res.ok) throw new Error(data.detail || text || t('k_api_error'));
-        updateLocalStatusFromServerIdentify(data);
-        applyIdentifyResult(data, 'online');
-      } catch (err) {
-        console.error('identifyFace error', err);
-        await setOfflineMode(true);
-        await ensureOfflineFaceCacheReady();
-        const localData = identifyFaceOffline(result.descriptor);
-        applyIdentifyResult(localData, 'offline');
-      }
-	    }
+	      try {
+	        const res = await fetch('/api/identify', {
+	          method: 'POST',
+	          headers: { 'Content-Type': 'application/json' },
+	          body: JSON.stringify({ embedding: result.descriptor, threshold: FACE_MATCH_THRESHOLD }),
+	        });
+	        const text = await res.text();
+	        const data = safeJsonParse(text, {});
+	        if (!res.ok) throw new Error(data.detail || text || t('k_api_error'));
+	        await updateOfflineStateByProbe(true, 'identify');
+	        updateLocalStatusFromServerIdentify(data);
+	        applyIdentifyResult(data, 'online');
+	      } catch (err) {
+	        console.error('identifyFace error', err);
+	        await updateOfflineStateByProbe(false, 'identify');
+	        await ensureOfflineFaceCacheReady();
+	        const localData = identifyFaceOffline(result.descriptor);
+	        applyIdentifyResult(localData, offlineMode ? 'offline' : 'fallback');
+	      }
+		    }
 
 	    function renderRecognized() {
 	      const nameEl = document.getElementById('recognized-name');
@@ -3548,18 +3734,19 @@
           return;
         }
 
-        const sent = await postEventOnline(payload);
-        if (sent.ok) {
-          finishSuccess(false);
-          return;
-        }
+	        const sent = await postEventOnline(payload);
+	        if (sent.ok) {
+	          await updateOfflineStateByProbe(true, 'event');
+	          finishSuccess(false);
+	          return;
+	        }
 
-        if (sent.retriable) {
-          await setOfflineMode(true);
-          await queueOfflineEvent(payload);
-          finishSuccess(true);
-          return;
-        }
+	        if (sent.retriable) {
+	          await updateOfflineStateByProbe(false, 'event');
+	          await queueOfflineEvent(payload);
+	          finishSuccess(true);
+	          return;
+	        }
 
         throw new Error(sent.error || t('k_event_failed'));
       } catch (err) {
@@ -3706,8 +3893,6 @@
 	        setText('employee-msg', adminEmployeeCreatedText(data.name, data.employee_code));
 	        await loadAdminEmployees();
 	        applySuggestedEmployeeCode();
-	        // Auto-open enlarged face registration modal for the newly created employee.
-	        openFaceModal(data.employee_code);
 	        // Reset form for next employee.
 		        document.getElementById('new-code').value = '';
 		        document.getElementById('new-name').value = '';
@@ -3766,25 +3951,22 @@
 
 	    let adminEmployees = [];
 
-	    function renderFaceEmployeeSelect() {
-	      const select = document.getElementById('face-employee');
-	      if (!select) return;
-	      const prev = select.value;
-	      select.innerHTML = '';
-	      const tmplLabel = adminLang() === 'ko' ? '템플릿' : 'Templates';
-	      for (const row of adminEmployees || []) {
-	        if (!row.is_active) continue;
-	        if (row.termination_date) continue;
-	        const option = document.createElement('option');
-	        option.value = row.employee_code;
-	        option.textContent = `${row.name} (${row.employee_code}) | ${row.work_group || 'FRONT'} | ${row.title} | ${tmplLabel} ${row.face_template_count}`;
-	        select.appendChild(option);
+	    function renderFaceEmployeeSelect(preferredCode = null) {
+	      const codeEl = document.getElementById('face-employee');
+	      if (!codeEl) return;
+	      const preferred = String(preferredCode || '').trim();
+	      const current = String(codeEl.value || '').trim();
+	      const target = preferred || current;
+	      if (!target) {
+	        updateFaceEmployeeContext('');
+	        return;
 	      }
-	      // Restore selection when possible.
-	      if (prev) {
-	        const found = Array.from(select.options).some((o) => o.value === prev);
-	        if (found) select.value = prev;
+	      const exists = (adminEmployees || []).some((row) => String(row.employee_code || '') === target);
+	      if (!exists) {
+	        updateFaceEmployeeContext('');
+	        return;
 	      }
+	      updateFaceEmployeeContext(target);
 	    }
 
 	    function _parseCode(code) {
@@ -4046,7 +4228,7 @@
           <td><select class="mini-select" id="emp-group-${row.id}" style="width:74px;">${groupOptions(row.work_group || 'FRONT')}</select></td>
           <td><select class="mini-select" id="emp-title-${row.id}" style="width:74px;">${titleOptions(row.title || 'STAFF')}</select></td>
           <td style="text-align:center;"><input type="checkbox" id="emp-active-${row.id}" ${row.is_active ? 'checked' : ''} /></td>
-          <td class="emp-sticky face-col"><button class="mini-btn face-enroll-btn${faceDone ? ' done' : ''}" onclick="openFaceModal('${row.employee_code}')">${faceLabel}</button></td>
+          <td class="emp-sticky face-col"><button class="mini-btn face-enroll-btn${faceDone ? ' done' : ''}" onclick="openFaceModalFromManageRow('${row.employee_code}')">${faceLabel}</button></td>
           <td class="emp-sticky save-col"><button class="admin-btn mini-btn" onclick="saveEmployee('${row.id}')">${tAdmin('a_btn_save')}</button></td>
         `;
         tbody.appendChild(tr);
@@ -4186,6 +4368,11 @@
 	          setText('face-msg', tAdmin('a_msg_face_saving'), true);
 	          return;
 	        }
+	        const employeeCode = String(document.getElementById('face-employee')?.value || '').trim();
+	        if (!employeeCode) {
+	          setText('face-msg', tAdmin('a_msg_select_employee'), true);
+	          return;
+	        }
 	        if (faceSamples.length >= FACE_SAMPLE_TARGET) {
 	          // Auto-save may have failed or been delayed; allow a retry by pressing capture.
 	          setText('face-msg', tAdmin('a_msg_face_already_captured'), true);
@@ -4242,6 +4429,7 @@
 	          faceAutoCloseTimer = null;
 	        }
 	        faceSaving = true;
+          if (!auto) hideFaceRetrySaveButton();
 	        setText('face-msg', auto ? tAdmin('a_msg_face_auto_saving') : tAdmin('a_msg_saving'));
 	        const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
 	        const timer = controller ? setTimeout(() => controller.abort(), 15000) : null;
@@ -4295,6 +4483,7 @@
 	        setText('face-msg', adminFaceSavedText(employeeCode, data.template_count));
         playFaceEnrollCompleteRing();
 	        faceSamples = [];
+          hideFaceRetrySaveButton();
 	        document.getElementById('face-sample-count').textContent = adminSampleCountText(0);
 	        await loadAdminEmployees();
 	        await loadAdminOverview();
@@ -4307,10 +4496,15 @@
 	        scheduleFaceModalAutoClose(1200);
 	      } catch (err) {
 	        const isAbort = err && (err.name === 'AbortError');
+          if (auto) {
+            showFaceRetrySaveButton();
+          }
 	        if (isAbort) {
-	          setText('face-msg', adminLang() === 'ko' ? '저장 시간이 초과되었습니다. 네트워크/서버 상태를 확인한 뒤 “얼굴 등록 저장”을 다시 눌러주세요.' : 'Save timed out. Please check network/server and press “Save Face” again.', true);
+	          setText('face-msg', adminLang() === 'ko' ? '저장 시간이 초과되었습니다. 네트워크/서버 상태를 확인한 뒤 “재저장” 버튼을 눌러주세요.' : 'Save timed out. Please check network/server and press “Retry Save”.', true);
 	        } else {
-	        setText('face-msg', err.message, true);
+            const baseMsg = err && err.message ? err.message : tAdmin('a_msg_face_register_failed');
+            const suffix = auto ? ` ${tAdmin('a_msg_face_retry_visible')}` : '';
+	        setText('face-msg', `${baseMsg}${suffix}`, true);
 	        }
 	      } finally {
 	        faceSaving = false;
