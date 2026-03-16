@@ -223,6 +223,48 @@ class AdminResetResponse(BaseModel):
     deleted_audit_logs: int
 
 
+class AdminSystemBackupItem(BaseModel):
+    backup_id: str
+    kind: str
+    filename: str
+    backup_year: int
+    covered_start: str
+    covered_end: str
+    created_at: str
+    size_bytes: int
+
+
+class AdminSystemBackupListResponse(BaseModel):
+    items: List[AdminSystemBackupItem]
+
+
+class AdminSystemBackupRunRequest(BaseModel):
+    admin_pin: str
+    backup_password: str
+
+
+class AdminSystemBackupRunResponse(BaseModel):
+    ok: bool
+    annual: AdminSystemBackupItem
+    recovery: AdminSystemBackupItem
+
+
+class AdminSystemBackupRestoreRequest(BaseModel):
+    admin_pin: str
+    backup_password: str
+    backup_id: str
+
+
+class AdminSystemBackupRestoreResponse(BaseModel):
+    ok: bool
+    restored: AdminSystemBackupItem
+
+
+class AdminSystemBackupUploadResponse(BaseModel):
+    ok: bool
+    uploaded: AdminSystemBackupItem
+
+
 class AdminQueryEvent(BaseModel):
     ts_utc: datetime
     ts_et: str

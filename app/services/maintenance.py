@@ -18,13 +18,14 @@ from app.db.models import AuditLog, TimeEvent, TimeSegment
 from app.db.session import SessionLocal, engine
 from app.services.csv_export import build_pay_period_adp_attachment, build_pay_period_xlsx
 from app.services.mailer import MailerError, send_email_with_attachments
+from app.services.system_backup import create_backup_set
 
 
 @dataclass(frozen=True)
 class MaintenanceConfig:
     retention_days: int = 365
-    backup_hour: int = 1
-    backup_minute: int = 30
+    backup_hour: int = 2
+    backup_minute: int = 0
     # Overwritten daily. Can be set to an absolute path in containers (ex: /data/backup).
     backup_filename: str = os.getenv("BACKUP_FILENAME", "backup")
     payroll_auto_schedule: str = "WEEKLY_OR_BIWEEKLY_ANCHORED_ET_0130"
@@ -47,6 +48,7 @@ _K_PAYROLL_AUTO_PENDING_ANCHOR_WEEKDAY = "payroll_auto_email_pending_anchor_week
 _K_PAYROLL_AUTO_PENDING_ANCHOR_START = "payroll_auto_email_pending_anchor_start_date"
 _K_PAYROLL_AUTO_PENDING_EFFECTIVE_START = "payroll_auto_email_pending_effective_start"
 _PAYROLL_AUTO_VERSION_V2 = "v2"
+_K_MAINTENANCE_LAST_RUN_DATE = "system_backup_last_run_date"
 
 
 def _project_root() -> Path:
@@ -111,6 +113,13 @@ def _run_retention(db: Session, *, cutoff_dt_utc: datetime) -> dict[str, int]:
         "time_segments": int(deleted_segments),
         "audit_logs": int(deleted_audits),
     }
+
+
+def _retention_cutoff_utc(*, today_et: date, retention_days: int) -> datetime:
+    # Keep "today" plus the preceding retention_days-1 calendar days in Eastern time.
+    keep_start_et = today_et - timedelta(days=max(0, retention_days - 1))
+    keep_start_et_dt = datetime.combine(keep_start_et, datetime.min.time(), tzinfo=EASTERN_TZ)
+    return keep_start_et_dt.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 def _cfg_get(db: Session, key: str) -> Optional[str]:
@@ -353,6 +362,27 @@ def _run_sqlite_backup(src_db: Path, dest_file: Path) -> None:
             dst.execute("PRAGMA wal_checkpoint(FULL)")
 
 
+def _run_daily_maintenance(cfg: MaintenanceConfig, *, run_day_et: date) -> None:
+    cutoff = _retention_cutoff_utc(today_et=run_day_et, retention_days=cfg.retention_days)
+    annual_years = [run_day_et.year]
+    if run_day_et.month == 1 and run_day_et.day <= 7:
+        annual_years.append(run_day_et.year - 1)
+
+    create_backup_set(
+        now_et=datetime.combine(run_day_et, datetime.min.time(), tzinfo=EASTERN_TZ),
+        annual_years=annual_years,
+    )
+
+    with SessionLocal() as db:
+        _run_retention(db, cutoff_dt_utc=cutoff)
+        _cfg_set_date(db, _K_MAINTENANCE_LAST_RUN_DATE, run_day_et)
+        db.commit()
+
+    src = _sqlite_db_path()
+    if src is not None and src.exists():
+        _run_sqlite_backup(src, _backup_path(cfg))
+
+
 def _lock_file_path() -> Path:
     return (_data_dir() / ".maintenance.lock").resolve()
 
@@ -383,12 +413,15 @@ def _maintenance_worker(cfg: MaintenanceConfig) -> None:
         # Another process is already running maintenance.
         return
 
-    # One-time cleanup + one-time catch-up check at startup.
+    # Startup catch-up: if today's 2 AM batch was missed, run it once.
     try:
+        now_et = datetime.now(timezone.utc).astimezone(EASTERN_TZ)
         with SessionLocal() as db:
-            cutoff = datetime.utcnow() - timedelta(days=cfg.retention_days)
-            _run_retention(db, cutoff_dt_utc=cutoff)
-            _maybe_send_payroll_auto_email(db, cfg=cfg, now_et=datetime.now(timezone.utc).astimezone(EASTERN_TZ))
+            _maybe_send_payroll_auto_email(db, cfg=cfg, now_et=now_et)
+            last_run_day = _cfg_get_date(db, _K_MAINTENANCE_LAST_RUN_DATE)
+        scheduled_today_et = now_et.replace(hour=cfg.backup_hour, minute=cfg.backup_minute, second=0, microsecond=0)
+        if last_run_day != now_et.date() and now_et >= scheduled_today_et:
+            _run_daily_maintenance(cfg, run_day_et=now_et.date())
     except Exception:
         # Keep the worker alive; next run may succeed.
         pass
@@ -399,14 +432,10 @@ def _maintenance_worker(cfg: MaintenanceConfig) -> None:
         time.sleep(sleep_s)
 
         try:
+            now_et = datetime.now(timezone.utc).astimezone(EASTERN_TZ)
             with SessionLocal() as db:
-                cutoff = datetime.utcnow() - timedelta(days=cfg.retention_days)
-                _run_retention(db, cutoff_dt_utc=cutoff)
-                _maybe_send_payroll_auto_email(db, cfg=cfg, now_et=datetime.now(timezone.utc).astimezone(EASTERN_TZ))
-
-            src = _sqlite_db_path()
-            if src is not None and src.exists():
-                _run_sqlite_backup(src, _backup_path(cfg))
+                _maybe_send_payroll_auto_email(db, cfg=cfg, now_et=now_et)
+            _run_daily_maintenance(cfg, run_day_et=now_et.date())
         except Exception:
             # Swallow errors; try again next day.
             continue

@@ -167,6 +167,15 @@
     #face-modal-backdrop #admin-camera { max-height: 520px; }
     #employee-modal-backdrop .modal { width: min(1280px, calc(100vw - 24px)); }
     #employee-edit-modal-backdrop .modal { width: min(720px, calc(100vw - 32px)); }
+    #term-date-modal-backdrop .modal { width: min(420px, calc(100vw - 32px)); }
+    #employee-edit-modal-backdrop .employee-edit-fields {
+      gap: 2px;
+      margin-top: 8px;
+      align-items: center;
+    }
+    #employee-edit-modal-backdrop .employee-edit-fields label {
+      margin-left: 0 !important;
+    }
     #query-modal-backdrop .modal { width: min(1180px, calc(100vw - 24px)); }
     #query-modal-events-wrap {
       margin-top: 8px;
@@ -588,7 +597,7 @@
       touch-action: pan-x pan-y;
     }
     #employee-modal-backdrop {
-      --emp-code-col-w: 108px;
+      --emp-code-col-w: 58px;
     }
     #employee-modal-backdrop .employee-manage-scroll table thead th {
       position: sticky;
@@ -625,6 +634,12 @@
       -webkit-user-select: none;
       user-select: none;
       touch-action: none;
+      display: inline-block;
+      min-width: 42px;
+      padding: 0;
+      font-size: 11px;
+      line-height: 1.05;
+      letter-spacing: 0;
     }
     #employee-modal-backdrop .employee-manage-scroll table,
     #employee-modal-backdrop .employee-manage-scroll thead,
@@ -645,26 +660,46 @@
       -webkit-touch-callout: default;
     }
 
-	    #employee-modal-backdrop table.tight { table-layout: auto; min-width: 1360px; }
+    #employee-modal-backdrop table.tight { table-layout: auto; min-width: 700px; }
 	    #employee-modal-backdrop table.tight th,
-	    #employee-modal-backdrop table.tight td { white-space: nowrap; }
+	    #employee-modal-backdrop table.tight td {
+        white-space: nowrap;
+        padding: 0 1px;
+      }
 	    #employee-modal-backdrop .emp-sticky {
 	      position: sticky;
 	      background: white;
 	      z-index: 2;
 	    }
 	    #employee-modal-backdrop .emp-sticky.save-col { right: 0; }
-	    #employee-modal-backdrop .emp-sticky.face-col { right: 84px; }
+	    #employee-modal-backdrop .emp-sticky.face-col { right: 60px; }
     @supports (-webkit-touch-callout: none) {
       @media (max-width: 1180px) {
         #employee-modal-backdrop .emp-sticky { position: static; }
       }
     }
 	    #employee-modal-backdrop .term-badge {
-	      max-width: 140px;
+	      max-width: 96px;
 	      overflow: hidden;
 	      text-overflow: ellipsis;
 	    }
+    #employee-modal-backdrop .manage-employee-inline {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+    }
+    #employee-modal-backdrop .manage-employee-name-input {
+      width: 145px !important;
+      min-width: 145px !important;
+    }
+    #employee-modal-backdrop .manage-employee-date-input {
+      width: 52px !important;
+      min-width: 52px !important;
+    }
+    #employee-modal-backdrop .manage-employee-select {
+      width: 92px !important;
+      min-width: 92px !important;
+    }
     #employee-modal-backdrop th.sortable-col {
       cursor: pointer;
       user-select: none;
@@ -687,13 +722,18 @@
       color: #fff;
       border: none;
       border-radius: 999px;
-      padding: 6px 10px;
+      padding: 5px 7px;
       font-size: 12px;
       cursor: pointer;
+      min-width: 78px;
     }
     #employee-modal-backdrop .face-enroll-btn.done {
       background: #9ca3af;
       color: #fff;
+    }
+    #employee-modal-backdrop .manage-save-btn {
+      min-width: 56px;
+      padding: 5px 7px;
     }
     #face-modal-backdrop #face-capture-btn {
       background: #2563eb !important;
@@ -858,10 +898,10 @@
 	
     #employee-modal-backdrop .manage-date-wrap {
       position: relative;
-      width: 104px;
+      width: 110px;
     }
     #employee-modal-backdrop .manage-date-wrap .manage-date-input {
-      width: 104px;
+      width: 110px;
       color: transparent;
       caret-color: transparent;
     }
@@ -884,6 +924,16 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    #employee-modal-backdrop .manage-date-wrap.term-date-wrap .manage-date-label {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    #employee-modal-backdrop .manage-date-wrap.term-date-wrap {
+      width: 103px;
+    }
+    #employee-modal-backdrop .manage-date-wrap.term-date-wrap .manage-date-input {
+      width: 103px;
+    }
     #employee-modal-backdrop .manage-date-wrap .manage-date-input:focus + .manage-date-label {
       opacity: 0.45;
     }
@@ -899,6 +949,16 @@
       padding: 8px 10px;
       font-size: 13px;
       border-radius: 10px;
+    }
+    #employee-register-card .employee-register-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    #employee-register-card .employee-register-actions .employee-register-primary-btn {
+      min-width: 150px;
+      text-align: center;
     }
 	  </style>
 	</head>
@@ -993,7 +1053,8 @@
                     </div>
   			            <div class="row" style="margin:0;">
   		              <button class="sub-btn mini-btn" onclick="openPinModal()" data-i18n-admin="a_change_pin">비밀번호 변경</button>
-  		              <button class="btn-danger mini-btn" onclick="openResetModal()" data-i18n-admin="a_reset_all">전체 초기화</button>
+                      <button class="sub-btn mini-btn" onclick="openSystemBackupModal()" data-i18n-admin="a_system_backup">시스템백업</button>
+		              <button class="sub-btn mini-btn" onclick="openResetModal()" data-i18n-admin="a_reset_all">전체 초기화</button>
   		            </div>
                   </div>
 		          </div>
@@ -1010,9 +1071,9 @@
 				          <div class="card flexcol" id="employee-register-card">
 				            <div class="card-header">
 				              <h3 data-i18n-admin="a_employee_register">직원 등록</h3>
-				              <div class="row" style="margin:0;">
-				                <button class="btn-blue mini-btn" onclick="createEmployee()" data-i18n-admin="a_btn_create_employee">등록</button>
-				                <button class="btn-orange mini-btn" onclick="openEmployeeModal()" data-i18n-admin="a_employee_manage">직원 조회/수정</button>
+				              <div class="row employee-register-actions" style="margin:0;">
+				                <button class="btn-blue mini-btn employee-register-primary-btn" onclick="createEmployee()" data-i18n-admin="a_btn_create_employee">등록</button>
+				                <button class="btn-orange mini-btn employee-register-primary-btn" onclick="openEmployeeModal()" data-i18n-admin="a_employee_manage">직원 조회/수정</button>
 				                <button class="sub-btn mini-btn" onclick="openEmployeeBulkModal()" data-i18n-admin="a_employee_excel_update">직원정보 엑셀업데이트</button>
 				              </div>
 				            </div>
@@ -1285,7 +1346,7 @@
         <div class="pill" id="emp-edit-code" style="font-weight:800;"></div>
         <button id="emp-edit-face-btn" class="mini-btn face-enroll-btn" onclick="showFaceEnrollFromListOnlyHint()" data-i18n-admin="a_btn_face_enroll">얼굴 등록</button>
       </div>
-      <div class="row">
+      <div class="row employee-edit-fields">
         <input id="emp-edit-name" class="mini-input" maxlength="15" placeholder="이름" data-i18n-admin-ph="a_ph_emp_name" style="min-width: 180px;" />
         <input id="emp-edit-hire" class="mini-input" type="date" title="입사일" data-i18n-admin-title="a_title_hire" style="min-width: 160px;" />
         <input id="emp-edit-term" class="mini-input" type="date" title="퇴사일" data-i18n-admin-title="a_title_term" style="min-width: 160px;" />
@@ -1312,6 +1373,22 @@
     </div>
   </div>
 
+  <div id="term-date-modal-backdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3 data-i18n-admin="a_term_modal_title">퇴사일 관리</h3>
+      <p class="muted" data-i18n-admin="a_term_modal_help">퇴사일을 선택하거나 삭제할 수 있습니다.</p>
+      <div class="row">
+        <input id="term-date-modal-input" class="mini-input" type="date" style="min-width: 200px;" />
+      </div>
+      <div class="row">
+        <button class="sub-btn" onclick="clearTerminationDateModal()" data-i18n-admin="a_btn_delete">삭제</button>
+        <button class="admin-btn" onclick="applyTerminationDateModal()" data-i18n-admin="a_btn_apply">적용</button>
+        <button class="sub-btn" onclick="closeTerminationDateModal()" data-i18n-admin="a_btn_close">닫기</button>
+      </div>
+      <div id="term-date-modal-msg" class="status"></div>
+    </div>
+  </div>
+
   <div id="employee-bulk-modal-backdrop" class="modal-backdrop hidden">
     <div class="modal">
       <h3 data-i18n-admin="a_employee_excel_update">직원정보 엑셀업데이트</h3>
@@ -1325,6 +1402,46 @@
         <button class="admin-btn" onclick="uploadEmployeesExcel()" data-i18n-admin="a_btn_excel_upload">엑셀 업로드 반영</button>
       </div>
       <div id="employee-bulk-msg" class="status"></div>
+    </div>
+  </div>
+
+  <div id="system-backup-modal-backdrop" class="modal-backdrop hidden">
+    <div class="modal" style="max-width:920px; width:min(92vw, 920px);">
+      <h3 data-i18n-admin="a_system_backup">시스템백업</h3>
+      <p class="muted" data-i18n-admin="a_system_backup_help">전체 데이터 백업 생성, 목록 조회, 복구를 관리합니다. 중요한 작업이므로 비밀번호가 필요합니다.</p>
+      <div class="row">
+        <input id="system-backup-password" type="password" data-i18n-admin-ph="a_ph_password" placeholder="비밀번호" style="min-width:220px;" />
+        <button class="sub-btn" onclick="loadSystemBackups()" data-i18n-admin="a_btn_refresh">새로고침</button>
+        <button class="admin-btn" onclick="runSystemBackup()" data-i18n-admin="a_btn_system_backup_run">전체데이터 백업</button>
+        <button class="sub-btn" onclick="closeSystemBackupModal()" data-i18n-admin="a_btn_close">닫기</button>
+      </div>
+      <div class="row">
+        <input id="system-backup-file" type="file" accept=".zip" />
+        <button class="sub-btn" onclick="uploadSystemBackup()" data-i18n-admin="a_btn_system_backup_upload">백업 업로드</button>
+      </div>
+      <div id="system-backup-msg" class="status"></div>
+      <div class="muted" data-i18n-admin="a_system_backup_list_help" style="margin-top:8px;">복구할 백업을 선택한 뒤 복구 버튼을 눌러 주세요.</div>
+      <div class="hscroll-shell" style="margin-top:8px;">
+        <div class="hscroll">
+          <table class="table" id="system-backup-table">
+            <thead>
+              <tr>
+                <th data-i18n-admin="a_backup_kind">구분</th>
+                <th data-i18n-admin="a_backup_year">연도</th>
+                <th data-i18n-admin="a_backup_period">기간</th>
+                <th data-i18n-admin="a_backup_created">생성시각</th>
+                <th data-i18n-admin="a_backup_size">크기</th>
+                <th colspan="2" data-i18n-admin="a_backup_action">작업</th>
+              </tr>
+            </thead>
+            <tbody id="system-backup-tbody">
+              <tr>
+                <td colspan="7" class="muted" data-i18n-admin="a_system_backup_empty">백업 목록이 없습니다.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1415,6 +1532,7 @@
           let offlineRecoverCount = 0;
 
 	    let adminPin = '';
+      let systemBackupItems = [];
 	    let faceSamples = [];
 	    const FACE_SAMPLE_TARGET = 5;
 	    const FACE_ENROLL_DONE_THRESHOLD = 5;
@@ -2193,6 +2311,7 @@
         a_verify: '인증',
         a_dashboard: '대시보드',
         a_change_pin: '비밀번호 변경',
+        a_system_backup: '시스템백업',
         a_reset_all: '전체 초기화',
         a_kpi_active: '활성 직원',
         a_kpi_face: '얼굴 등록 직원',
@@ -2206,10 +2325,12 @@
 	        a_ph_emp_code: '사번 자동부여 (E0001)',
 	        a_ph_emp_name: '이름',
 	        a_ph_date: '연도. 월. 일.',
-	        a_title_hire: '입사일',
-	        a_title_term: '퇴사일(선택)',
-	        a_title_work_group: '근무위치 (FRONT/BACK)',
-	        a_title_title: '직책',
+        a_title_hire: '입사일',
+        a_title_term: '퇴사일(선택)',
+        a_term_modal_title: '퇴사일 관리',
+        a_term_modal_help: '퇴사일을 선택하거나 삭제할 수 있습니다.',
+        a_title_work_group: '근무위치 (FRONT/BACK)',
+        a_title_title: '직책',
         a_btn_create_employee: '등록',
         a_btn_modify: '수정',
         a_payroll_csv: '급여 CSV',
@@ -2258,6 +2379,8 @@
         a_ph_password: '비밀번호',
         a_btn_reset_run: '초기화 실행',
         a_btn_cancel: '취소',
+        a_btn_delete: '삭제',
+        a_btn_apply: '적용',
         a_pin_change_title: '관리자 비밀번호 변경',
         a_pin_change_help: '새 PIN은 4자 이상으로 설정하세요. (마스터 비밀번호는 변경되지 않습니다.)',
         a_ph_new_pin: '새 PIN',
@@ -2281,6 +2404,20 @@
         a_bulk_help: '직원 엑셀 다운로드 후 수정하여 업로드하면 일괄 반영됩니다. (employee_code 기준)',
         a_btn_excel_download: '직원 엑셀 다운로드',
         a_btn_excel_upload: '엑셀 업로드 반영',
+        a_system_backup_help: '전체 데이터 백업 생성, 목록 조회, 복구를 관리합니다. 중요한 작업이므로 비밀번호가 필요합니다.',
+        a_system_backup_list_help: '복구할 백업을 선택한 뒤 복구 버튼을 눌러 주세요.',
+        a_btn_system_backup_run: '전체데이터 백업',
+        a_btn_system_backup_upload: '백업 업로드',
+        a_btn_system_backup_restore: '전체데이터 복구',
+        a_system_backup_empty: '백업 목록이 없습니다.',
+        a_backup_kind: '구분',
+        a_backup_year: '연도',
+        a_backup_period: '기간',
+        a_backup_created: '생성시각',
+        a_backup_size: '크기',
+        a_backup_action: '작업',
+        a_backup_kind_annual: '연도백업',
+        a_backup_kind_recovery: '비상복구',
         a_face_title: '얼굴 등록 (5회 이상 캡처 권장: 앞/위/아래/좌/우)',
         a_face_help: '샘플 5개가 캡처되면 자동으로 저장됩니다. (5개 미만은 저장되지 않습니다.)',
         a_btn_sample_capture: '샘플 캡처',
@@ -2340,6 +2477,15 @@
         a_msg_auto_need_email: '자동 전송 이메일을 입력하세요.',
         a_msg_auto_save_failed: '자동 전송 설정 저장 실패',
         a_msg_auto_saved: '자동 전송 설정 저장 완료',
+        a_msg_system_backup_loading: '백업 목록을 불러오는 중...',
+        a_msg_system_backup_running: '전체데이터 백업 생성 중...',
+        a_msg_system_backup_uploading: '백업 파일 업로드 중...',
+        a_msg_system_backup_restoring: '전체데이터 복구 실행 중...',
+        a_msg_system_backup_file_required: '업로드할 백업 zip 파일을 선택하세요.',
+        a_msg_system_backup_password_required: '시스템백업 비밀번호를 입력하세요.',
+        a_msg_system_backup_done: '전체데이터 백업이 완료되었습니다.',
+        a_msg_system_backup_upload_done: '백업 파일 업로드가 완료되었습니다.',
+        a_msg_system_backup_restore_done: '전체데이터 복구가 완료되었습니다. 앱이 재시작될 수 있습니다.',
       },
       en: {
         a_tab_kiosk: 'TIMECLOCK',
@@ -2349,6 +2495,7 @@
         a_verify: 'Verify',
         a_dashboard: 'Dashboard',
         a_change_pin: 'Change PIN',
+        a_system_backup: 'System Backup',
         a_reset_all: 'Factory Reset',
         a_kpi_active: 'Active Employees',
         a_kpi_face: 'Face Enrolled Employees',
@@ -2364,6 +2511,8 @@
 	        a_ph_date: 'MM. DD. YYYY',
 	        a_title_hire: 'Hire date',
 	        a_title_term: 'Termination date (optional)',
+        a_term_modal_title: 'Termination Date',
+        a_term_modal_help: 'You can choose or remove the termination date.',
 	        a_title_work_group: 'Work group (FRONT/BACK)',
 	        a_title_title: 'Title',
         a_btn_create_employee: 'Create',
@@ -2414,6 +2563,8 @@
         a_ph_password: 'Password',
         a_btn_reset_run: 'Run Reset',
         a_btn_cancel: 'Cancel',
+        a_btn_delete: 'Delete',
+        a_btn_apply: 'Apply',
         a_pin_change_title: 'Change Admin PIN',
         a_pin_change_help: 'New PIN must be at least 4 characters. (Master password does not change.)',
         a_ph_new_pin: 'New PIN',
@@ -2437,6 +2588,20 @@
         a_bulk_help: 'Download the Excel, edit it, then upload to apply changes in bulk. (by employee_code)',
         a_btn_excel_download: 'Download Excel',
         a_btn_excel_upload: 'Upload & Apply',
+        a_system_backup_help: 'Manage full data backup creation, backup listing, and restore. Password is required for this sensitive action.',
+        a_system_backup_list_help: 'Choose a backup from the list and press restore when needed.',
+        a_btn_system_backup_run: 'Run Full Backup',
+        a_btn_system_backup_upload: 'Upload Backup',
+        a_btn_system_backup_restore: 'Restore Backup',
+        a_system_backup_empty: 'No backups found.',
+        a_backup_kind: 'Type',
+        a_backup_year: 'Year',
+        a_backup_period: 'Period',
+        a_backup_created: 'Created',
+        a_backup_size: 'Size',
+        a_backup_action: 'Action',
+        a_backup_kind_annual: 'Annual',
+        a_backup_kind_recovery: 'Recovery',
         a_face_title: 'Face Enrollment (recommended: 5 samples front/up/down/left/right)',
         a_face_help: 'Auto-saves when 5 samples are captured. (Saving is blocked until all 5 are captured.)',
         a_btn_sample_capture: 'Capture Sample',
@@ -2496,6 +2661,15 @@
         a_msg_auto_need_email: 'Please enter an auto-send email.',
         a_msg_auto_save_failed: 'Failed to save auto-send settings',
         a_msg_auto_saved: 'Auto-send settings saved',
+        a_msg_system_backup_loading: 'Loading backups...',
+        a_msg_system_backup_running: 'Creating full backup...',
+        a_msg_system_backup_uploading: 'Uploading backup file...',
+        a_msg_system_backup_restoring: 'Restoring backup...',
+        a_msg_system_backup_file_required: 'Please choose a backup zip file to upload.',
+        a_msg_system_backup_password_required: 'Enter the system backup password.',
+        a_msg_system_backup_done: 'Full backup completed.',
+        a_msg_system_backup_upload_done: 'Backup upload completed.',
+        a_msg_system_backup_restore_done: 'Backup restore completed. The app may restart.',
       },
     };
 
@@ -2946,6 +3120,207 @@
       document.getElementById('employee-bulk-modal-backdrop').classList.add('hidden');
     }
 
+    function getSystemBackupPassword() {
+      const el = document.getElementById('system-backup-password');
+      return (el?.value || '').trim();
+    }
+
+    function formatBackupKind(kind) {
+      return kind === 'annual' ? tAdmin('a_backup_kind_annual') : tAdmin('a_backup_kind_recovery');
+    }
+
+    function formatBackupPeriod(item) {
+      const start = item?.covered_start || '-';
+      const end = item?.covered_end || '-';
+      return `${start} ~ ${end}`;
+    }
+
+    function formatBackupSize(bytes) {
+      const n = Number(bytes || 0);
+      if (!Number.isFinite(n) || n <= 0) return '-';
+      if (n < 1024) return `${n} B`;
+      if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+      if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+      return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    }
+
+    function formatBackupCreated(value) {
+      if (!value) return '-';
+      try {
+        const dt = new Date(value);
+        if (Number.isNaN(dt.getTime())) return value;
+        return dt.toLocaleString(adminLang() === 'ko' ? 'ko-KR' : 'en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        });
+      } catch (_) {
+        return value;
+      }
+    }
+
+    function renderSystemBackups() {
+      const tbody = document.getElementById('system-backup-tbody');
+      if (!tbody) return;
+      if (!Array.isArray(systemBackupItems) || systemBackupItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="muted">${tAdmin('a_system_backup_empty')}</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = systemBackupItems.map((item) => `
+        <tr>
+          <td>${formatBackupKind(item.kind)}</td>
+          <td>${item.backup_year ?? '-'}</td>
+          <td>${formatBackupPeriod(item)}</td>
+          <td>${formatBackupCreated(item.created_at)}</td>
+          <td>${formatBackupSize(item.size_bytes)}</td>
+          <td><button class="btn-gray mini-btn" onclick="downloadSystemBackup('${String(item.backup_id).replace(/'/g, '&#39;')}')">${adminLang() === 'ko' ? '다운로드' : 'Download'}</button></td>
+          <td><button class="btn-orange mini-btn" onclick="restoreSystemBackup('${String(item.backup_id).replace(/'/g, '&#39;')}')" data-i18n-admin="a_btn_system_backup_restore">${tAdmin('a_btn_system_backup_restore')}</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function downloadSystemBackup(backupId) {
+      const backupPassword = getSystemBackupPassword();
+      if (!backupPassword) {
+        setText('system-backup-msg', tAdmin('a_msg_system_backup_password_required'), true);
+        return;
+      }
+      const url = `/api/admin/system-backups/download?admin_pin=${encodeURIComponent(adminPin)}&backup_password=${encodeURIComponent(backupPassword)}&backup_id=${encodeURIComponent(backupId)}`;
+      window.open(url, '_blank', 'noopener');
+    }
+
+    async function loadSystemBackups() {
+      if (!adminPin) {
+        setText('admin-lock-msg', tAdmin('a_msg_admin_required'), true);
+        return;
+      }
+      const backupPassword = getSystemBackupPassword();
+      if (!backupPassword) {
+        setText('system-backup-msg', tAdmin('a_msg_system_backup_password_required'), true);
+        return;
+      }
+      setText('system-backup-msg', tAdmin('a_msg_system_backup_loading'));
+      try {
+        const res = await fetch(`/api/admin/system-backups?admin_pin=${encodeURIComponent(adminPin)}&backup_password=${encodeURIComponent(backupPassword)}`);
+        const text = await res.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
+        if (!res.ok) throw new Error(data.detail || text || tAdmin('a_msg_query_failed'));
+        systemBackupItems = Array.isArray(data.items) ? data.items : [];
+        renderSystemBackups();
+        clearStatus('system-backup-msg');
+      } catch (err) {
+        setText('system-backup-msg', err.message, true);
+      }
+    }
+
+    function openSystemBackupModal() {
+      if (!adminPin) {
+        setText('admin-lock-msg', tAdmin('a_msg_admin_required'), true);
+        return;
+      }
+      clearStatus('system-backup-msg');
+      document.getElementById('system-backup-modal-backdrop')?.classList.remove('hidden');
+      setTimeout(() => document.getElementById('system-backup-password')?.focus(), 50);
+      loadSystemBackups();
+    }
+
+    function closeSystemBackupModal() {
+      document.getElementById('system-backup-modal-backdrop')?.classList.add('hidden');
+    }
+
+    async function runSystemBackup() {
+      const backupPassword = getSystemBackupPassword();
+      if (!backupPassword) {
+        setText('system-backup-msg', tAdmin('a_msg_system_backup_password_required'), true);
+        return;
+      }
+      setText('system-backup-msg', tAdmin('a_msg_system_backup_running'));
+      try {
+        const res = await fetch('/api/admin/system-backups/run', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ admin_pin: adminPin, backup_password: backupPassword }),
+        });
+        const text = await res.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
+        if (!res.ok) throw new Error(data.detail || text || tAdmin('a_msg_change_failed'));
+        setText('system-backup-msg', data.message || tAdmin('a_msg_system_backup_done'));
+        await loadSystemBackups();
+      } catch (err) {
+        setText('system-backup-msg', err.message, true);
+      }
+    }
+
+    async function uploadSystemBackup() {
+      const backupPassword = getSystemBackupPassword();
+      if (!backupPassword) {
+        setText('system-backup-msg', tAdmin('a_msg_system_backup_password_required'), true);
+        return;
+      }
+      const fileInput = document.getElementById('system-backup-file');
+      const file = fileInput?.files?.[0];
+      if (!file) {
+        setText('system-backup-msg', tAdmin('a_msg_system_backup_file_required'), true);
+        return;
+      }
+      const formData = new FormData();
+      formData.append('admin_pin', adminPin);
+      formData.append('backup_password', backupPassword);
+      formData.append('file', file);
+      setText('system-backup-msg', tAdmin('a_msg_system_backup_uploading'));
+      try {
+        const res = await fetch('/api/admin/system-backups/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const text = await res.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
+        if (!res.ok) throw new Error(data.detail || text || tAdmin('a_msg_change_failed'));
+        if (fileInput) fileInput.value = '';
+        setText('system-backup-msg', data.message || tAdmin('a_msg_system_backup_upload_done'));
+        await loadSystemBackups();
+      } catch (err) {
+        setText('system-backup-msg', err.message, true);
+      }
+    }
+
+    async function restoreSystemBackup(backupId) {
+      const backupPassword = getSystemBackupPassword();
+      if (!backupPassword) {
+        setText('system-backup-msg', tAdmin('a_msg_system_backup_password_required'), true);
+        return;
+      }
+      const confirmed = window.confirm(`${tAdmin('a_btn_system_backup_restore')}?\n${backupId}`);
+      if (!confirmed) return;
+      setText('system-backup-msg', tAdmin('a_msg_system_backup_restoring'));
+      try {
+        const res = await fetch('/api/admin/system-backups/restore', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ admin_pin: adminPin, backup_id: backupId, backup_password: backupPassword }),
+        });
+        const text = await res.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
+        if (!res.ok) throw new Error(data.detail || text || tAdmin('a_msg_change_failed'));
+        setText('system-backup-msg', data.message || tAdmin('a_msg_system_backup_restore_done'));
+        await loadSystemBackups();
+      } catch (err) {
+        setText('system-backup-msg', err.message, true);
+      }
+    }
+
     function setLocalizedStatus(id, i18nKey, isError = false) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -3040,6 +3415,7 @@
       try { closeEmployeeModal(); } catch (_) {}
       try { closeEmployeeEditModal(); } catch (_) {}
       try { closeEmployeeBulkModal(); } catch (_) {}
+      try { closeSystemBackupModal(); } catch (_) {}
       try { closeFaceModal(); } catch (_) {}
       try { closeQueryModal(); } catch (_) {}
 
@@ -3056,6 +3432,7 @@
       try { closeEmployeeModal(); } catch (_) {}
       try { closeEmployeeEditModal(); } catch (_) {}
       try { closeEmployeeBulkModal(); } catch (_) {}
+      try { closeSystemBackupModal(); } catch (_) {}
       try { closeFaceModal(); } catch (_) {}
       try { closeQueryModal(); } catch (_) {}
     }
@@ -4062,6 +4439,12 @@
     }
 
     function compareEmployeeRows(a, b) {
+      const aTerminated = !!String(a.termination_date || '').trim();
+      const bTerminated = !!String(b.termination_date || '').trim();
+      if (aTerminated !== bTerminated) {
+        return aTerminated ? 1 : -1;
+      }
+
       let cmp = 0;
       if (employeeSortKey === 'employee_code') {
         cmp = compareEmployeeCodes(a.employee_code, b.employee_code);
@@ -4099,6 +4482,83 @@
       const labelEl = document.getElementById(`emp-${field}-label-${id}`);
       if (!dateEl || !labelEl) return;
       labelEl.textContent = formatManageDateShort(dateEl.value || '');
+    }
+
+    let activeTerminationDateEmployeeId = '';
+
+    function closeTerminationDateModal() {
+      const backdrop = document.getElementById('term-date-modal-backdrop');
+      if (backdrop) backdrop.classList.add('hidden');
+      activeTerminationDateEmployeeId = '';
+      const msgEl = document.getElementById('term-date-modal-msg');
+      if (msgEl) msgEl.textContent = '';
+    }
+
+    function openTerminationDateModal(employeeId) {
+      const id = String(employeeId || '');
+      const dateEl = document.getElementById(`emp-term-${id}`);
+      const modalInput = document.getElementById('term-date-modal-input');
+      const backdrop = document.getElementById('term-date-modal-backdrop');
+      if (!dateEl || !modalInput || !backdrop) return;
+      activeTerminationDateEmployeeId = id;
+      modalInput.value = dateEl.value || '';
+      const msgEl = document.getElementById('term-date-modal-msg');
+      if (msgEl) msgEl.textContent = '';
+      backdrop.classList.remove('hidden');
+      setTimeout(() => {
+        try { modalInput.focus({ preventScroll: true }); } catch (_) { modalInput.focus(); }
+      }, 20);
+    }
+
+    function applyTerminationDateModalValue(rawValue) {
+      const id = String(activeTerminationDateEmployeeId || '');
+      if (!id) return;
+      const dateEl = document.getElementById(`emp-term-${id}`);
+      if (!dateEl) return;
+      dateEl.value = rawValue || '';
+      syncManageDateDisplay(id, 'term');
+    }
+
+    async function persistTerminationDateModalValue(rawValue) {
+      const id = String(activeTerminationDateEmployeeId || '');
+      if (!id) return;
+      const msgEl = document.getElementById('term-date-modal-msg');
+      if (msgEl) msgEl.textContent = adminLang() === 'ko' ? '저장 중...' : 'Saving...';
+      applyTerminationDateModalValue(rawValue || '');
+      const ok = await saveEmployee(id, { silent: true });
+      if (ok) {
+        closeTerminationDateModal();
+        return;
+      }
+      if (msgEl) msgEl.textContent = adminLang() === 'ko' ? '저장 실패' : 'Save failed';
+    }
+
+    async function applyTerminationDateModal() {
+      const modalInput = document.getElementById('term-date-modal-input');
+      if (!modalInput) return;
+      await persistTerminationDateModalValue(modalInput.value || '');
+    }
+
+    async function clearTerminationDateModal() {
+      await persistTerminationDateModalValue('');
+    }
+
+    function handleTerminationDateTap(event, employeeId) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      openTerminationDateModal(employeeId);
+      return false;
+    }
+
+    function handleTerminationDateContext(event, employeeId) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      openTerminationDateModal(employeeId);
+      return false;
     }
 
     function openManageDatePicker(employeeId, field) {
@@ -4212,9 +4672,6 @@
       };
 
       for (const row of sorted) {
-        const termBadge = row.termination_date
-          ? `<span class="muted term-badge" style="white-space:nowrap;">(${adminLang() === 'ko' ? '퇴사' : 'Terminated'} ${row.termination_date})</span>`
-          : '';
         const faceDone = Number(row.face_template_count || 0) >= FACE_ENROLL_DONE_THRESHOLD;
         const faceLabel = faceDone
           ? (adminLang() === 'ko' ? '등록완료' : 'Enrolled')
@@ -4222,14 +4679,14 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="emp-left code-col"><button type="button" class="code-link" onclick="openEmployeeEditModal('${row.id}')">${row.employee_code}</button></td>
-          <td><div style="display:flex; align-items:center; gap:6px;"><input class="mini-input" id="emp-name-${row.id}" maxlength="15" value="${String(row.name || '').replaceAll('"', '&quot;')}" style="width:120px;" />${termBadge}</div></td>
-          <td><div class="manage-date-wrap"><input class="mini-input manage-date-input" id="emp-hire-${row.id}" type="date" value="${row.hire_date || ''}" ondblclick="openManageDatePicker('${row.id}', 'hire')" onchange="syncManageDateDisplay('${row.id}', 'hire')" style="width:104px;" /><span class="manage-date-label" id="emp-hire-label-${row.id}">${formatManageDateShort(row.hire_date)}</span></div></td>
-          <td><div class="manage-date-wrap"><input class="mini-input manage-date-input" id="emp-term-${row.id}" type="date" value="${row.termination_date || ''}" ondblclick="openManageDatePicker('${row.id}', 'term')" onchange="syncManageDateDisplay('${row.id}', 'term')" style="width:104px;" /><span class="manage-date-label" id="emp-term-label-${row.id}">${formatManageDateShort(row.termination_date)}</span></div></td>
-          <td><select class="mini-select" id="emp-group-${row.id}" style="width:74px;">${groupOptions(row.work_group || 'FRONT')}</select></td>
-          <td><select class="mini-select" id="emp-title-${row.id}" style="width:74px;">${titleOptions(row.title || 'STAFF')}</select></td>
+          <td><div class="manage-employee-inline"><input class="mini-input manage-employee-name-input" id="emp-name-${row.id}" maxlength="15" value="${String(row.name || '').replaceAll('"', '&quot;')}" /></div></td>
+          <td><div class="manage-date-wrap"><input class="mini-input manage-date-input manage-employee-date-input" id="emp-hire-${row.id}" type="date" value="${row.hire_date || ''}" ondblclick="openManageDatePicker('${row.id}', 'hire')" onchange="syncManageDateDisplay('${row.id}', 'hire')" /><span class="manage-date-label" id="emp-hire-label-${row.id}">${formatManageDateShort(row.hire_date)}</span></div></td>
+          <td><div class="manage-date-wrap term-date-wrap"><input class="mini-input manage-date-input manage-employee-date-input" id="emp-term-${row.id}" type="date" value="${row.termination_date || ''}" ondblclick="openManageDatePicker('${row.id}', 'term')" onchange="syncManageDateDisplay('${row.id}', 'term')" /><span class="manage-date-label" id="emp-term-label-${row.id}" onclick="return handleTerminationDateTap(event, '${row.id}')" oncontextmenu="return handleTerminationDateContext(event, '${row.id}')">${formatManageDateShort(row.termination_date)}</span></div></td>
+          <td><select class="mini-select manage-employee-select" id="emp-group-${row.id}">${groupOptions(row.work_group || 'FRONT')}</select></td>
+          <td><select class="mini-select manage-employee-select" id="emp-title-${row.id}">${titleOptions(row.title || 'STAFF')}</select></td>
           <td style="text-align:center;"><input type="checkbox" id="emp-active-${row.id}" ${row.is_active ? 'checked' : ''} /></td>
           <td class="emp-sticky face-col"><button class="mini-btn face-enroll-btn${faceDone ? ' done' : ''}" onclick="openFaceModalFromManageRow('${row.employee_code}')">${faceLabel}</button></td>
-          <td class="emp-sticky save-col"><button class="admin-btn mini-btn" onclick="saveEmployee('${row.id}')">${tAdmin('a_btn_save')}</button></td>
+          <td class="emp-sticky save-col"><button class="admin-btn mini-btn manage-save-btn" onclick="saveEmployee('${row.id}')">${tAdmin('a_btn_save')}</button></td>
         `;
         tbody.appendChild(tr);
       }
@@ -5105,10 +5562,12 @@
 	        document.addEventListener('keydown', (e) => {
 	          if (e.key === 'Escape') {
 	            closeResetModal();
-	            closePinModal();
-	            closeEmployeeModal();
+            closePinModal();
+            closeEmployeeModal();
             closeEmployeeEditModal();
             closeEmployeeBulkModal();
+            closeSystemBackupModal();
+            closeTerminationDateModal();
 	            closeFaceModal();
             closeQueryModal();
 	          }

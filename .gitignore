@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.env.*
+.venv/
+__pycache__/
+*/__pycache__/
+data/
+*.db
+*.log
+*.pid
+system_backups/
+backup/
+._*
+*.bak
+*.bak.*
+*.pre_restore*
+*.rollback_before.*

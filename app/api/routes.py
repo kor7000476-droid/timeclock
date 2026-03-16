@@ -6,11 +6,14 @@ import hmac
 import io
 import json
 import re
+import tempfile
 from math import ceil
+from pathlib import Path
 from typing import Optional
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi.responses import FileResponse
 from openpyxl import Workbook
 from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -34,6 +37,13 @@ from app.api.schemas import (
     AdminRecentEvent,
     AdminResetRequest,
     AdminResetResponse,
+    AdminSystemBackupItem,
+    AdminSystemBackupListResponse,
+    AdminSystemBackupRestoreRequest,
+    AdminSystemBackupRestoreResponse,
+    AdminSystemBackupRunRequest,
+    AdminSystemBackupRunResponse,
+    AdminSystemBackupUploadResponse,
     EmailCsvRequest,
     EmployeeBulkImportResponse,
     EmployeeCreate,
@@ -62,6 +72,7 @@ from app.services.mailer import MailerError, send_email_with_attachments
 from app.services.admin_auth import change_admin_pin as _change_admin_pin
 from app.services.admin_auth import verify_admin_pin as _verify_admin_pin
 from app.services.state_machine import StateError, allowed_events_for_status, apply_event, infer_state
+from app.services.system_backup import BackupItem, create_backup_set, import_backup_archive, list_backups, restore_backup, restore_in_progress
 
 router = APIRouter(prefix="/api")
 
@@ -69,6 +80,9 @@ router = APIRouter(prefix="/api")
 _RESET_SALT = bytes.fromhex("0b3c8c3f99f0e1df7e6a9dfb6b9d9a1a")
 _RESET_DK_HEX = "bb88922917ab77586ebdfe4708ecf7ec4a6fdfe8cc63d059212a1cc3a0cec514"
 _RESET_ITERATIONS = 210_000
+_SYSTEM_BACKUP_SALT = bytes.fromhex("7f6c6d454e58a8c4b8b7d4017b7a9d11")
+_SYSTEM_BACKUP_DK_HEX = "cc9721816df65fad53b284e824421ea0c5b1d5fdd3c0f8bd9ca1629b6c045f59"
+_SYSTEM_BACKUP_ITERATIONS = 210_000
 _RETENTION_DAYS = 365
 
 _K_PAYROLL_AUTO_ENABLED = "payroll_auto_email_enabled"
@@ -180,6 +194,39 @@ def require_admin(db: Session, admin_pin: Optional[str]) -> None:
         raise HTTPException(status_code=403, detail="invalid admin PIN")
 
 
+def _verify_system_backup_password(candidate: str) -> bool:
+    dk = hashlib.pbkdf2_hmac(
+        "sha256",
+        candidate.encode("utf-8"),
+        _SYSTEM_BACKUP_SALT,
+        _SYSTEM_BACKUP_ITERATIONS,
+    ).hex()
+    return hmac.compare_digest(dk, _SYSTEM_BACKUP_DK_HEX)
+
+
+def _require_system_backup_password(candidate: str) -> None:
+    if not _verify_system_backup_password((candidate or "").strip()):
+        raise HTTPException(status_code=403, detail="invalid system backup password")
+
+
+def _ensure_system_writes_available() -> None:
+    if restore_in_progress():
+        raise HTTPException(status_code=503, detail="system restore in progress")
+
+
+def _serialize_backup_item(item: BackupItem) -> AdminSystemBackupItem:
+    return AdminSystemBackupItem(
+        backup_id=item.backup_id,
+        kind=item.kind,
+        filename=item.filename,
+        backup_year=item.backup_year,
+        covered_start=item.covered_start,
+        covered_end=item.covered_end,
+        created_at=item.created_at,
+        size_bytes=item.size_bytes,
+    )
+
+
 _EMPLOYEE_CODE_PATTERN = re.compile(r"^([A-Z])(\d{4})$")
 
 
@@ -218,6 +265,7 @@ def _allocate_next_employee_code(db: Session) -> str:
 
 @router.post("/admin/reset", response_model=AdminResetResponse)
 def admin_reset(payload: AdminResetRequest, db: Session = Depends(get_db)) -> AdminResetResponse:
+    _ensure_system_writes_available()
     require_admin(db, payload.admin_pin)
     if not _verify_reset_password(payload.reset_password):
         raise HTTPException(status_code=403, detail="invalid reset password")
@@ -250,6 +298,122 @@ def admin_reset(payload: AdminResetRequest, db: Session = Depends(get_db)) -> Ad
         deleted_time_segments=deleted_time_segments,
         deleted_audit_logs=deleted_audit_logs,
     )
+
+
+@router.get("/admin/system-backups", response_model=AdminSystemBackupListResponse)
+def admin_list_system_backups(
+    admin_pin: str,
+    backup_password: str,
+    db: Session = Depends(get_db),
+) -> AdminSystemBackupListResponse:
+    require_admin(db, admin_pin)
+    _require_system_backup_password(backup_password)
+    return AdminSystemBackupListResponse(items=[_serialize_backup_item(item) for item in list_backups()])
+
+
+@router.get("/admin/system-backups/download")
+def admin_download_system_backup(
+    admin_pin: str,
+    backup_password: str,
+    backup_id: str,
+    db: Session = Depends(get_db),
+):
+    require_admin(db, admin_pin)
+    _require_system_backup_password(backup_password)
+    item = next((candidate for candidate in list_backups() if candidate.backup_id == backup_id), None)
+    if item is None:
+        raise HTTPException(status_code=404, detail="backup not found")
+    return FileResponse(
+        path=item.path,
+        media_type="application/zip",
+        filename=item.filename,
+    )
+
+
+@router.post("/admin/system-backups/run", response_model=AdminSystemBackupRunResponse)
+def admin_run_system_backup(
+    payload: AdminSystemBackupRunRequest,
+    db: Session = Depends(get_db),
+) -> AdminSystemBackupRunResponse:
+    require_admin(db, payload.admin_pin)
+    _require_system_backup_password(payload.backup_password)
+    result = create_backup_set()
+    return AdminSystemBackupRunResponse(
+        ok=True,
+        annual=_serialize_backup_item(result.annual),
+        recovery=_serialize_backup_item(result.recovery),
+    )
+
+
+@router.post("/admin/system-backups/restore", response_model=AdminSystemBackupRestoreResponse)
+def admin_restore_system_backup(
+    payload: AdminSystemBackupRestoreRequest,
+    db: Session = Depends(get_db),
+) -> AdminSystemBackupRestoreResponse:
+    require_admin(db, payload.admin_pin)
+    _require_system_backup_password(payload.backup_password)
+    _ensure_system_writes_available()
+    restored = restore_backup(payload.backup_id)
+    db.add(
+        AuditLog(
+            who="admin",
+            action="SYSTEM_BACKUP_RESTORE",
+            target_type="system_backup",
+            target_id=payload.backup_id,
+            before_json=None,
+            after_json=json.dumps({"filename": restored.filename}, ensure_ascii=True),
+            reason="manual restore",
+        )
+    )
+    db.commit()
+    return AdminSystemBackupRestoreResponse(ok=True, restored=_serialize_backup_item(restored))
+
+
+@router.post("/admin/system-backups/upload", response_model=AdminSystemBackupUploadResponse)
+async def admin_upload_system_backup(
+    admin_pin: str = Form(...),
+    backup_password: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+) -> AdminSystemBackupUploadResponse:
+    require_admin(db, admin_pin)
+    _require_system_backup_password(backup_password)
+    if not file.filename or not file.filename.lower().endswith(".zip"):
+        raise HTTPException(status_code=400, detail="backup zip file is required")
+
+    suffix = ".zip"
+    with tempfile.NamedTemporaryFile(prefix="system_backup_upload_", suffix=suffix, delete=False) as tmp:
+        tmp_path = tmp.name
+        while True:
+            chunk = await file.read(1024 * 1024)
+            if not chunk:
+                break
+            tmp.write(chunk)
+    await file.close()
+
+    try:
+        uploaded = import_backup_archive(Path(tmp_path))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    finally:
+        try:
+            Path(tmp_path).unlink(missing_ok=True)
+        except Exception:
+            pass
+
+    db.add(
+        AuditLog(
+            who="admin",
+            action="SYSTEM_BACKUP_UPLOAD",
+            target_type="system_backup",
+            target_id=uploaded.backup_id,
+            before_json=None,
+            after_json=json.dumps({"filename": uploaded.filename}, ensure_ascii=True),
+            reason="manual upload",
+        )
+    )
+    db.commit()
+    return AdminSystemBackupUploadResponse(ok=True, uploaded=_serialize_backup_item(uploaded))
 
 
 @router.post("/admin/pin/change", response_model=AdminPinChangeResponse)
@@ -349,6 +513,7 @@ def payroll_auto_email_status(admin_pin: str, db: Session = Depends(get_db)) -> 
 def payroll_auto_email_config(
     payload: AdminPayrollAutoEmailConfigRequest, db: Session = Depends(get_db)
 ) -> AdminPayrollAutoEmailConfigResponse:
+    _ensure_system_writes_available()
     require_admin(db, payload.admin_pin)
     _cfg_set(db, _K_PAYROLL_AUTO_ENABLED, "true" if payload.enabled else "false")
     if payload.to_email:
@@ -433,6 +598,7 @@ def list_employees(db: Session = Depends(get_db)) -> list[Employee]:
 
 @router.post("/employees", response_model=EmployeeOut)
 def create_employee(payload: EmployeeCreate, db: Session = Depends(get_db)) -> Employee:
+    _ensure_system_writes_available()
     require_admin(db, payload.admin_pin)
 
     code = _allocate_next_employee_code(db)
@@ -476,6 +642,7 @@ def create_employee(payload: EmployeeCreate, db: Session = Depends(get_db)) -> E
 
 @router.post("/employees/{employee_id}/deactivate")
 def deactivate_employee(employee_id: str, admin_pin: str, db: Session = Depends(get_db)) -> dict[str, bool]:
+    _ensure_system_writes_available()
     require_admin(db, admin_pin)
 
     employee = db.get(Employee, employee_id)
@@ -502,6 +669,7 @@ def deactivate_employee(employee_id: str, admin_pin: str, db: Session = Depends(
 def admin_update_employee(
     employee_id: str, payload: AdminEmployeeUpdateRequest, db: Session = Depends(get_db)
 ) -> AdminEmployeeUpdateResponse:
+    _ensure_system_writes_available()
     require_admin(db, payload.admin_pin)
 
     employee = db.get(Employee, employee_id)
@@ -598,6 +766,7 @@ async def admin_employees_import_xlsx(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ) -> EmployeeBulkImportResponse:
+    _ensure_system_writes_available()
     require_admin(db, admin_pin)
 
     filename = (file.filename or "").lower()
@@ -1169,6 +1338,7 @@ def admin_events_query_email(payload: AdminEventQueryEmailRequest, db: Session =
 
 @router.post("/faces/register", response_model=FaceRegisterResponse)
 def register_face_templates(payload: FaceRegisterRequest, db: Session = Depends(get_db)) -> FaceRegisterResponse:
+    _ensure_system_writes_available()
     require_admin(db, payload.admin_pin)
 
     employee = db.execute(select(Employee).where(Employee.employee_code == payload.employee_code)).scalar_one_or_none()
@@ -1279,6 +1449,7 @@ def register_face_templates(payload: FaceRegisterRequest, db: Session = Depends(
 
 @router.post("/identify", response_model=IdentifyResponse)
 def identify(payload: IdentifyRequest, db: Session = Depends(get_db)) -> IdentifyResponse:
+    _ensure_system_writes_available()
     if len(payload.embedding) < 32:
         return IdentifyResponse(
             matched=False,
@@ -1435,6 +1606,7 @@ def offline_face_cache(db: Session = Depends(get_db)) -> OfflineFaceCacheRespons
 
 @router.post("/events", response_model=EventOut)
 def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> TimeEvent:
+    _ensure_system_writes_available()
     event_uuid = (payload.event_uuid or "").strip() or None
     if event_uuid:
         duplicate = db.execute(select(TimeEvent).where(TimeEvent.event_uuid == event_uuid)).scalar_one_or_none()
