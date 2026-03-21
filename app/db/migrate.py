@@ -51,6 +51,11 @@ def run_migrations(engine: Engine) -> None:
                 conn.execute(text("UPDATE employees SET work_group='FRONT' WHERE work_group IS NULL OR work_group=''"))
 
     cols = _sqlite_columns(engine, "employees")
+    if "fixed_start_time" not in cols:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE employees ADD COLUMN fixed_start_time TEXT"))
+
+    cols = _sqlite_columns(engine, "employees")
     if "hire_date" not in cols:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE employees ADD COLUMN hire_date TEXT"))
@@ -81,6 +86,7 @@ def run_migrations(engine: Engine) -> None:
                     "  id TEXT PRIMARY KEY,"
                     "  employee_code TEXT NOT NULL UNIQUE,"
                     "  name TEXT NOT NULL,"
+                    "  fixed_start_time TEXT,"
                     "  hire_date TEXT,"
                     "  termination_date TEXT,"
                     "  title TEXT NOT NULL DEFAULT 'STAFF',"
@@ -94,10 +100,11 @@ def run_migrations(engine: Engine) -> None:
             conn.execute(
                 text(
                     "INSERT INTO employees_new("
-                    "  id, employee_code, name, hire_date, termination_date, title, work_group, is_active, created_at, updated_at"
+                    "  id, employee_code, name, fixed_start_time, hire_date, termination_date, title, work_group, is_active, created_at, updated_at"
                     ") "
                     "SELECT "
                     "  id, employee_code, name, "
+                    "  fixed_start_time, "
                     "  hire_date, termination_date, "
                     "  COALESCE(NULLIF(title,''), 'STAFF') AS title, "
                     "  COALESCE(NULLIF(work_group,''), 'FRONT') AS work_group, "
@@ -146,6 +153,12 @@ def run_migrations(engine: Engine) -> None:
         # Data retention is fixed at 365 days (see maintenance + event write path).
 
     cols = _sqlite_columns(engine, "time_events")
+    if "effective_ts_utc" not in cols:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE time_events ADD COLUMN effective_ts_utc TIMESTAMP"))
+            conn.execute(text("UPDATE time_events SET effective_ts_utc = ts_utc WHERE effective_ts_utc IS NULL"))
+
+    cols = _sqlite_columns(engine, "time_events")
     if "event_uuid" not in cols:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE time_events ADD COLUMN event_uuid TEXT"))
@@ -165,5 +178,11 @@ def run_migrations(engine: Engine) -> None:
             text(
                 "CREATE INDEX IF NOT EXISTS ix_time_events_ts_utc_employee_event "
                 "ON time_events(ts_utc, employee_id, event_type)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_time_events_effective_ts_utc_employee_event "
+                "ON time_events(effective_ts_utc, employee_id, event_type)"
             )
         )

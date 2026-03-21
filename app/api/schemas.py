@@ -10,6 +10,7 @@ from pydantic import BaseModel, EmailStr, Field
 class EmployeeCreate(BaseModel):
     employee_code: str = Field(min_length=1, max_length=64)
     name: str = Field(min_length=1, max_length=120)
+    fixed_start_time: Optional[str] = None
     hire_date: date
     termination_date: Optional[date] = None
     title: Literal["GM", "AM", "STAFF", "OTHER"] = "STAFF"
@@ -21,6 +22,7 @@ class EmployeeOut(BaseModel):
     id: str
     employee_code: str
     name: str
+    fixed_start_time: Optional[str]
     hire_date: date
     termination_date: Optional[date]
     title: str
@@ -48,6 +50,7 @@ class EventOut(BaseModel):
     employee_id: str
     event_type: str
     ts_utc: datetime
+    effective_ts_utc: Optional[datetime] = None
     event_uuid: Optional[str]
     method: str
     confidence: Optional[float]
@@ -131,6 +134,7 @@ class AdminEmployeeRow(BaseModel):
     id: str
     employee_code: str
     name: str
+    fixed_start_time: Optional[str]
     hire_date: date
     termination_date: Optional[date]
     title: str
@@ -142,6 +146,7 @@ class AdminEmployeeRow(BaseModel):
 class AdminEmployeeUpdateRequest(BaseModel):
     admin_pin: str
     name: str = Field(min_length=1, max_length=120)
+    fixed_start_time: Optional[str] = None
     hire_date: date
     termination_date: Optional[date] = None
     title: Literal["GM", "AM", "STAFF", "OTHER"] = "STAFF"

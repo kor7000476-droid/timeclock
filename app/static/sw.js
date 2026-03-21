@@ -1,4 +1,4 @@
-const SW_VERSION = "timeclock-sw-v20260309-pwa2";
+const SW_VERSION = "timeclock-sw-v20260316-syncfix1";
 const APP_SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 

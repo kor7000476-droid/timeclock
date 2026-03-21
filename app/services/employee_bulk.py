@@ -17,6 +17,7 @@ from app.db.models import AuditLog, Employee
 HEADERS = [
     "employee_code",
     "name",
+    "fixed_start_time",
     "hire_date",
     "termination_date",
     "title",
@@ -69,6 +70,19 @@ def _to_date(value: Any) -> Optional[date]:
         return None
 
 
+def _to_fixed_start_time(value: Any) -> Optional[str]:
+    text = _normalize_str(value)
+    if not text:
+        return None
+    if not re.match(r"^\d{2}:\d{2}$", text):
+        return None
+    hour = int(text[:2])
+    minute = int(text[3:5])
+    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+        return None
+    return f"{hour:02d}:{minute:02d}"
+
+
 def export_employees_xlsx(db: Session) -> bytes:
     wb = Workbook()
     ws = wb.active
@@ -82,6 +96,7 @@ def export_employees_xlsx(db: Session) -> bytes:
             [
                 emp.employee_code,
                 emp.name,
+                emp.fixed_start_time or "",
                 emp.hire_date.isoformat() if getattr(emp, "hire_date", None) else "",
                 emp.termination_date.isoformat() if getattr(emp, "termination_date", None) else "",
                 emp.title or "STAFF",
@@ -95,10 +110,11 @@ def export_employees_xlsx(db: Session) -> bytes:
     guide.append(["1) Edit the employees sheet and keep the header row unchanged."])
     guide.append(["2) employee_code is the unique key."])
     guide.append(["3) Existing employee_code -> update, new employee_code -> create."])
-    guide.append(["4) For new rows, employee_code/name/hire_date are required."])
-    guide.append(["5) title accepts GM/AM/STAFF/OTHER."])
-    guide.append(["6) work_group accepts FRONT/BACK."])
-    guide.append(["7) is_active accepts TRUE/FALSE, 1/0, Y/N."])
+    guide.append(["4) fixed_start_time uses HH:MM (example: 08:00) and is optional."])
+    guide.append(["5) For new rows, employee_code/name/hire_date are required."])
+    guide.append(["6) title accepts GM/AM/STAFF/OTHER."])
+    guide.append(["7) work_group accepts FRONT/BACK."])
+    guide.append(["8) is_active accepts TRUE/FALSE, 1/0, Y/N."])
 
     output = io.BytesIO()
     wb.save(output)
@@ -133,6 +149,11 @@ def import_employees_xlsx(db: Session, file_bytes: bytes, actor: str = "admin") 
         if employee_code:
             employee_code = employee_code.strip().upper()
         name = _normalize_str(val("name"))
+        fixed_start_time_raw = val("fixed_start_time")
+        fixed_start_time = _to_fixed_start_time(fixed_start_time_raw)
+        if _normalize_str(fixed_start_time_raw) and fixed_start_time is None:
+            errors.append(f"Row {row_num}: invalid fixed_start_time ({fixed_start_time_raw}); use HH:MM")
+            continue
         hire_date = _to_date(val("hire_date"))
         term_date = _to_date(val("termination_date"))
         title_raw = _normalize_str(val("title"))
@@ -150,7 +171,7 @@ def import_employees_xlsx(db: Session, file_bytes: bytes, actor: str = "admin") 
             # Termination date means terminated.
             is_active = False
 
-        if all(x is None for x in [employee_code, name, hire_date, term_date, val("is_active")]):
+        if all(x is None for x in [employee_code, name, fixed_start_time, hire_date, term_date, val("is_active")]):
             skipped += 1
             continue
 
@@ -176,6 +197,7 @@ def import_employees_xlsx(db: Session, file_bytes: bytes, actor: str = "admin") 
             employee = Employee(
                 employee_code=employee_code,
                 name=name,
+                fixed_start_time=fixed_start_time,
                 hire_date=hire_date,
                 termination_date=term_date,
                 title=title or "STAFF",
@@ -208,6 +230,7 @@ def import_employees_xlsx(db: Session, file_bytes: bytes, actor: str = "admin") 
 
         before = {
             "name": current.name,
+            "fixed_start_time": current.fixed_start_time,
             "hire_date": current.hire_date.isoformat() if getattr(current, "hire_date", None) else None,
             "termination_date": current.termination_date.isoformat() if getattr(current, "termination_date", None) else None,
             "title": current.title,
@@ -217,6 +240,7 @@ def import_employees_xlsx(db: Session, file_bytes: bytes, actor: str = "admin") 
 
         if name:
             current.name = name
+        current.fixed_start_time = fixed_start_time
         if hire_date is not None:
             current.hire_date = hire_date
         # termination_date: blank clears, value sets
@@ -238,9 +262,10 @@ def import_employees_xlsx(db: Session, file_bytes: bytes, actor: str = "admin") 
                 target_id=current.id,
                 before_json=json.dumps(before),
                 after_json=json.dumps(
-                    {
-                        "name": current.name,
-                        "title": current.title,
+                        {
+                            "name": current.name,
+                            "fixed_start_time": current.fixed_start_time,
+                            "title": current.title,
                         "work_group": current.work_group,
                         "is_active": current.is_active,
                     }

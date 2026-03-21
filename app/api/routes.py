@@ -61,7 +61,7 @@ from app.api.schemas import (
     AdminPayrollAutoEmailStatusResponse,
 )
 from app.core.config import settings
-from app.core.tz import EASTERN_TZ, eastern_date_range_to_utc_naive, eastern_today_utc_naive_range
+from app.core.tz import EASTERN_TZ, eastern_date_range_to_utc_naive, eastern_today_utc_naive_range, utc_naive_to_eastern
 from app.db.models import AuditLog, Employee, EventMethod, EventType, FaceTemplate, TimeEvent, TimeSegment
 from app.db.session import get_db
 from app.services.aggregation import summarize_employee_events
@@ -102,6 +102,7 @@ _K_PAYROLL_AUTO_PENDING_EFFECTIVE_START = "payroll_auto_email_pending_effective_
 _PAYROLL_AUTO_VERSION_V2 = "v2"
 _PAYROLL_AUTO_SCHEDULE = "WEEKLY_OR_BIWEEKLY_ANCHORED_ET_0130"
 _OFFLINE_FACE_THRESHOLD = 0.53
+_FIXED_START_RE = re.compile(r"^\d{2}:\d{2}$")
 
 
 def _cfg_get(db: Session, key: str) -> Optional[str]:
@@ -116,6 +117,37 @@ def _cfg_set(db: Session, key: str, value: str) -> None:
         ),
         {"k": key, "v": value},
     )
+
+
+def _normalize_fixed_start_time(raw: Optional[str]) -> Optional[str]:
+    value = str(raw or "").strip()
+    if not value:
+        return None
+    if not _FIXED_START_RE.match(value):
+        raise HTTPException(status_code=400, detail="fixed_start_time must use HH:MM")
+    hour = int(value[:2])
+    minute = int(value[3:5])
+    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+        raise HTTPException(status_code=400, detail="fixed_start_time must use HH:MM")
+    return f"{hour:02d}:{minute:02d}"
+
+
+def _effective_event_ts_utc(employee: Employee, event_type: EventType, ts_utc: datetime) -> datetime:
+    if event_type != EventType.CLOCK_IN:
+        return ts_utc
+    fixed_start_time = _normalize_fixed_start_time(getattr(employee, "fixed_start_time", None))
+    if not fixed_start_time:
+        return ts_utc
+    local_ts = utc_naive_to_eastern(ts_utc)
+    fixed_local = local_ts.replace(
+        hour=int(fixed_start_time[:2]),
+        minute=int(fixed_start_time[3:5]),
+        second=0,
+        microsecond=0,
+    )
+    if local_ts >= fixed_local:
+        return ts_utc
+    return fixed_local.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 def _cfg_set_date(db: Session, key: str, value: Optional[date]) -> None:
@@ -605,10 +637,12 @@ def create_employee(payload: EmployeeCreate, db: Session = Depends(get_db)) -> E
 
     if payload.termination_date is not None and payload.termination_date < payload.hire_date:
         raise HTTPException(status_code=400, detail="termination_date must be >= hire_date")
+    fixed_start_time = _normalize_fixed_start_time(payload.fixed_start_time)
 
     employee = Employee(
         employee_code=code,
         name=payload.name,
+        fixed_start_time=fixed_start_time,
         hire_date=payload.hire_date,
         termination_date=payload.termination_date,
         title=payload.title,
@@ -628,6 +662,7 @@ def create_employee(payload: EmployeeCreate, db: Session = Depends(get_db)) -> E
                 {
                     "employee_code": employee.employee_code,
                     "name": employee.name,
+                    "fixed_start_time": employee.fixed_start_time,
                     "hire_date": employee.hire_date.isoformat() if employee.hire_date else None,
                     "termination_date": employee.termination_date.isoformat() if employee.termination_date else None,
                 }
@@ -678,9 +713,11 @@ def admin_update_employee(
 
     if payload.termination_date is not None and payload.termination_date < payload.hire_date:
         raise HTTPException(status_code=400, detail="termination_date must be >= hire_date")
+    fixed_start_time = _normalize_fixed_start_time(payload.fixed_start_time)
 
     before = {
         "name": employee.name,
+        "fixed_start_time": employee.fixed_start_time,
         "hire_date": employee.hire_date.isoformat() if getattr(employee, "hire_date", None) else None,
         "termination_date": employee.termination_date.isoformat() if getattr(employee, "termination_date", None) else None,
         "title": employee.title,
@@ -689,6 +726,7 @@ def admin_update_employee(
     }
 
     employee.name = payload.name
+    employee.fixed_start_time = fixed_start_time
     employee.hire_date = payload.hire_date
     employee.termination_date = payload.termination_date
     employee.title = payload.title
@@ -706,6 +744,7 @@ def admin_update_employee(
             after_json=json.dumps(
                 {
                     "name": employee.name,
+                    "fixed_start_time": employee.fixed_start_time,
                     "hire_date": employee.hire_date.isoformat() if getattr(employee, "hire_date", None) else None,
                     "termination_date": employee.termination_date.isoformat() if getattr(employee, "termination_date", None) else None,
                     "title": employee.title,
@@ -736,6 +775,7 @@ def admin_employees(admin_pin: str, db: Session = Depends(get_db)) -> list[Admin
                 id=emp.id,
                 employee_code=emp.employee_code,
                 name=emp.name,
+                fixed_start_time=emp.fixed_start_time,
                 hire_date=emp.hire_date,
                 termination_date=emp.termination_date,
                 title=emp.title or "STAFF",
@@ -1336,6 +1376,148 @@ def admin_events_query_email(payload: AdminEventQueryEmailRequest, db: Session =
     return {"ok": True, "to_email": to_email, "total_events": response.total_events}
 
 
+@router.get("/admin/events/query/download")
+def admin_events_query_download(
+    admin_pin: str,
+    start_date: str,
+    end_date: str,
+    q: str = "",
+    scope: str = _EVENT_SCOPE_ALL,
+    event_filter: str = _EVENT_FILTER_ALL,
+    db: Session = Depends(get_db),
+) -> Response:
+    require_admin(db, admin_pin)
+    start_d = _parse_query_input_date(start_date, "start_date")
+    end_d = _parse_query_input_date(end_date, "end_date")
+    response, _ = _run_admin_event_query(
+        db,
+        start_date=start_d,
+        end_date=end_d,
+        q=q,
+        scope=scope,
+        event_filter=event_filter,
+        page=1,
+        page_size=_EVENT_PAGE_SIZE_MAX,
+        include_all_events_for_export=False,
+    )
+
+    start_dt, end_dt = eastern_date_range_to_utc_naive(start_d, end_d)
+    q_clean = (q or "").strip()
+    scope_norm = _normalize_event_scope(scope)
+    event_filter_norm = _normalize_event_filter(event_filter)
+    where_clauses = [TimeEvent.ts_utc >= start_dt, TimeEvent.ts_utc < end_dt]
+
+    if scope_norm == _EVENT_SCOPE_CODE:
+        if not q_clean:
+            raise HTTPException(status_code=400, detail="q is required when scope=EMPLOYEE_CODE")
+        ql = q_clean.lower()
+        where_clauses.append(
+            or_(
+                func.lower(Employee.employee_code) == ql,
+                func.lower(Employee.employee_code).like(f"%{ql}%"),
+            )
+        )
+    elif scope_norm == _EVENT_SCOPE_NAME:
+        if not q_clean:
+            raise HTTPException(status_code=400, detail="q is required when scope=EMPLOYEE_NAME")
+        ql = q_clean.lower()
+        where_clauses.append(func.lower(Employee.name).like(f"%{ql}%"))
+
+    event_types = _event_types_for_filter(event_filter_norm)
+    if event_types is not None:
+        where_clauses.append(TimeEvent.event_type.in_(event_types))
+
+    export_rows = (
+        db.execute(
+            select(TimeEvent, Employee)
+            .join(Employee, TimeEvent.employee_id == Employee.id)
+            .where(*where_clauses)
+            .order_by(TimeEvent.ts_utc.asc())
+        )
+        .all()
+    )
+    if not export_rows:
+        raise HTTPException(status_code=400, detail="No events to download for selected filter")
+
+    csv_output = io.StringIO()
+    csv_writer = csv.DictWriter(
+        csv_output,
+        fieldnames=[
+            "TimestampET",
+            "EffectiveTimestampET",
+            "EmployeeCode",
+            "EmployeeName",
+            "Title",
+            "EventType",
+            "Method",
+        ],
+        delimiter=",",
+        quotechar='"',
+        quoting=csv.QUOTE_MINIMAL,
+        lineterminator="\r\n",
+    )
+    csv_writer.writeheader()
+    for ev, emp in export_rows:
+        effective_ts = getattr(ev, "effective_ts_utc", None) or ev.ts_utc
+        csv_writer.writerow(
+            {
+                "TimestampET": _ts_utc_to_et_text(ev.ts_utc),
+                "EffectiveTimestampET": _ts_utc_to_et_text(effective_ts),
+                "EmployeeCode": emp.employee_code,
+                "EmployeeName": emp.name,
+                "Title": emp.title or "STAFF",
+                "EventType": ev.event_type.value,
+                "Method": ev.method.value,
+            }
+        )
+
+    filename_parts = ["event_query"]
+    if scope_norm == _EVENT_SCOPE_CODE and q_clean:
+        filename_parts.append(f"code_{re.sub(r'[^A-Za-z0-9_-]+', '_', q_clean)}")
+    elif scope_norm == _EVENT_SCOPE_NAME and q_clean:
+        filename_parts.append(f"name_{re.sub(r'[^A-Za-z0-9_-]+', '_', q_clean)}")
+    filename_parts.append(str(start_d))
+    filename_parts.append(str(end_d))
+    filename = "_".join(filename_parts) + ".csv"
+
+    try:
+        db.add(
+            AuditLog(
+                who="admin",
+                action="ADMIN_EVENT_QUERY_DOWNLOAD",
+                target_type="report",
+                target_id=end_d.isoformat(),
+                before_json=None,
+                after_json=json.dumps(
+                    {
+                        "start_date": response.start_date.isoformat(),
+                        "end_date": response.end_date.isoformat(),
+                        "scope": response.scope,
+                        "event_filter": response.event_filter,
+                        "q": response.q,
+                        "matched_employees": response.matched_employees,
+                        "total_events": len(export_rows),
+                        "filename": filename,
+                    }
+                ),
+                reason=(
+                    f"{response.scope}/{response.event_filter} "
+                    f"{_event_window_text_et(response.start_date, response.end_date)} "
+                    f"download={len(export_rows)}"
+                )[:255],
+            )
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    return Response(
+        content=csv_output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename=\"{filename}\"'},
+    )
+
+
 @router.post("/faces/register", response_model=FaceRegisterResponse)
 def register_face_templates(payload: FaceRegisterRequest, db: Session = Depends(get_db)) -> FaceRegisterResponse:
     _ensure_system_writes_available()
@@ -1629,6 +1811,7 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> TimeEve
 
     ts = payload.ts_utc or datetime.now(timezone.utc).replace(tzinfo=None)
     event_type = EventType(payload.event_type)
+    effective_ts = _effective_event_ts_utc(employee, event_type, ts)
 
     existing_events = (
         db.execute(select(TimeEvent).where(TimeEvent.employee_id == employee.id).order_by(TimeEvent.ts_utc)).scalars().all()
@@ -1643,6 +1826,7 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> TimeEve
         employee_id=employee.id,
         event_type=event_type,
         ts_utc=ts,
+        effective_ts_utc=effective_ts,
         event_uuid=event_uuid,
         device_id=payload.device_id,
         method=method,
