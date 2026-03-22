@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="TLJ-AWS" />
+  <meta name="apple-mobile-web-app-title" content="TIME" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon-180.png?v=20260309" />
   <link rel="apple-touch-icon" sizes="167x167" href="/static/icons/apple-touch-icon-167.png?v=20260309" />
   <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/apple-touch-icon-152.png?v=20260309" />
@@ -165,7 +165,7 @@
     }
     #face-modal-backdrop .modal { width: min(860px, calc(100vw - 32px)); }
     #face-modal-backdrop #admin-camera { max-height: 520px; }
-    #employee-modal-backdrop .modal { width: min(1340px, calc(100vw - 14px)); padding: 12px 12px; }
+    #employee-modal-backdrop .modal { width: min(1280px, calc(100vw - 24px)); }
     #employee-edit-modal-backdrop .modal { width: min(720px, calc(100vw - 32px)); }
     #term-date-modal-backdrop .modal { width: min(420px, calc(100vw - 32px)); }
     #employee-edit-modal-backdrop .employee-edit-fields {
@@ -262,9 +262,8 @@
 	      margin-top: 10px;
 	    }
     .event-query-controls {
-      gap: 8px;
-      align-items: end;
-      grid-template-columns: 1.1fr 0.8fr 0.8fr 12ch 12ch auto;
+      gap: 12px;
+      align-items: center;
     }
     .event-query-controls #query-q { min-width: 260px; }
     .query-header-search {
@@ -317,6 +316,27 @@
       font-size: 13px;
       font-weight: 800;
     }
+    @media (min-width: 1024px) {
+      body:not(.ios-ipad-ui) #admin-dashboard-card .card-header {
+        flex-wrap: nowrap;
+        align-items: center;
+      }
+      body:not(.ios-ipad-ui) #admin-dashboard-card .dashboard-header-right {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      body:not(.ios-ipad-ui) #admin-dashboard-card .dashboard-inline-kpi {
+        display: inline-flex;
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+      body:not(.ios-ipad-ui) #admin-dashboard-card .kpi {
+        display: none;
+      }
+    }
     @supports (-webkit-touch-callout: none) {
       @media (max-width: 1180px) {
         #admin-panel .event-query-controls {
@@ -334,19 +354,19 @@
           margin: 0;
         }
         #admin-panel .event-query-controls #query-scope {
-          width: 90px !important;
+          width: 97px !important;
         }
         #admin-panel .event-query-controls #query-event-filter {
-          width: 108px !important;
+          width: 117px !important;
         }
         #admin-panel .event-query-controls #query-q {
-          width: 192px !important;
-          min-width: 192px !important;
+          width: 209px !important;
+          min-width: 209px !important;
         }
         #admin-panel .event-query-controls #query-start,
         #admin-panel .event-query-controls #query-end {
-          width: 120px !important;
-          min-width: 120px !important;
+          width: 130px !important;
+          min-width: 130px !important;
         }
         #admin-panel .event-query-controls #query-search-btn {
           width: auto !important;
@@ -587,495 +607,6 @@
     }
     .kpi .value { font-size: 24px; font-weight: 700; color: #1d4ed8; }
     .kpi .label { font-size: 12px; color: #475569; }
-    .admin-workspace {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .admin-toolbar-card {
-      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-      border-color: #cfe0f7;
-    }
-    .admin-toolbar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    .admin-toolbar-copy h3 {
-      margin-bottom: 4px;
-      font-size: 26px;
-    }
-    .admin-toolbar-copy .muted {
-      font-size: 14px;
-    }
-    .admin-toolbar-actions {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      align-items: flex-start;
-    }
-    .admin-toolbar-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-      margin-left: auto;
-      min-width: 0;
-    }
-    .admin-summary-strip {
-      display: flex;
-      gap: 4px;
-      gap: 3px;
-      margin-top: 0;
-      max-width: none;
-      justify-content: flex-end;
-    }
-    .admin-summary-item {
-      border: 1px solid #d5e3f7;
-      background: #f8fbff;
-      border-radius: 10px;
-      padding: 4px 6px;
-      min-height: 46px;
-      min-width: 94px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    .admin-summary-label {
-      font-size: 9px;
-      font-weight: 700;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      line-height: 1.15;
-    }
-    .admin-summary-value {
-      margin-top: 1px;
-      font-size: 16px;
-      font-weight: 800;
-      color: #1d4ed8;
-      line-height: 1;
-    }
-    .admin-summary-meta { display: none; }
-    .admin-desktop-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
-      gap: 12px;
-      align-items: start;
-    }
-    .admin-main-column,
-    .admin-side-column {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      min-width: 0;
-    }
-    .admin-panel-card {
-      border-radius: 12px;
-      border: 1px solid #d6dee8;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-    .admin-panel-card .card-header {
-      margin-bottom: 12px;
-    }
-    .admin-panel-card h3 {
-      font-size: 24px;
-    }
-    .admin-panel-subtitle {
-      margin: 2px 0 0;
-      font-size: 13px;
-      color: #64748b;
-    }
-    .admin-form-surface {
-      border: 1px solid #d9d9d9;
-      border-radius: 10px;
-      overflow: hidden;
-      background: #fff;
-      margin-top: 10px;
-    }
-    .admin-form-grid {
-      width: 100%;
-      min-width: 760px;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-    .admin-form-grid th,
-    .admin-form-grid td {
-      border: 1px solid #d9d9d9;
-      padding: 8px 10px;
-      vertical-align: middle;
-      background: #fff;
-    }
-    .admin-form-grid th {
-      background: #f2f5f9;
-      font-size: 12px;
-      font-weight: 800;
-      color: #334155;
-      text-align: center;
-      line-height: 1.2;
-    }
-    .admin-form-grid td > input,
-    .admin-form-grid td > select,
-    .admin-form-grid td > .fixed-start-picker {
-      width: 100% !important;
-      min-width: 0 !important;
-      box-sizing: border-box;
-    }
-    .admin-form-grid td > .fixed-start-picker {
-      display: flex;
-    }
-    .admin-form-grid td.emp-code-cell input {
-      background: #eef2ff !important;
-      font-weight: 800;
-      text-align: center;
-    }
-    .admin-card-toolbar {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .admin-card-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .admin-note-box {
-      border: 1px solid #bfdbfe;
-      background: #eff6ff;
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 12px;
-      color: #1e3a8a;
-    }
-    .admin-form-surface.compact-surface {
-      margin-top: 6px;
-    }
-    .admin-form-grid.compact-register-grid {
-      min-width: 690px;
-    }
-    .admin-form-grid.compact-register-grid th,
-    .admin-form-grid.compact-register-grid td {
-      padding: 6px 6px;
-    }
-    .admin-form-grid.compact-register-grid th:nth-child(1),
-    .admin-form-grid.compact-register-grid td:nth-child(1) { width: 84px; }
-    .admin-form-grid.compact-register-grid th:nth-child(2),
-    .admin-form-grid.compact-register-grid td:nth-child(2) { width: 124px; }
-    .admin-form-grid.compact-register-grid th:nth-child(3),
-    .admin-form-grid.compact-register-grid td:nth-child(3) { width: 90px; }
-    .admin-form-grid.compact-register-grid th:nth-child(4),
-    .admin-form-grid.compact-register-grid td:nth-child(4) { width: 96px; }
-    .admin-form-grid.compact-register-grid th:nth-child(5),
-    .admin-form-grid.compact-register-grid td:nth-child(5) { width: 68px; }
-    .admin-form-grid.compact-register-grid th:nth-child(6),
-    .admin-form-grid.compact-register-grid td:nth-child(6) { width: 76px; }
-    .admin-form-grid.compact-register-grid #new-hire,
-    .admin-form-grid.compact-register-grid #new-group,
-    .admin-form-grid.compact-register-grid #new-title {
-      min-width: 0 !important;
-      width: 100% !important;
-      max-width: 100% !important;
-    }
-    .admin-form-grid.compact-register-grid #new-hire {
-      font-size: 12px;
-      padding-left: 6px;
-      padding-right: 2px;
-      min-width: 0 !important;
-      overflow: hidden;
-    }
-    .admin-form-grid.compact-register-grid #new-group,
-    .admin-form-grid.compact-register-grid #new-title {
-      font-size: 11px;
-      padding-left: 4px;
-      padding-right: 18px;
-    }
-    .admin-form-grid.compact-register-grid #new-fixed-start-display {
-      font-size: 12px;
-      padding-left: 6px;
-      padding-right: 6px;
-    }
-    .admin-search-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px 8px;
-      align-items: end;
-    }
-    .admin-search-grid .field {
-      min-width: 0;
-    }
-    .admin-search-grid input,
-    .admin-search-grid select {
-      width: 100%;
-      min-width: 0 !important;
-    }
-    .admin-action-list {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
-    }
-    .admin-action-btn {
-      justify-content: flex-start;
-      min-height: 40px;
-      font-weight: 700;
-      padding: 8px 10px;
-    }
-    .payroll-csv-grid {
-      grid-template-columns: 12ch 12ch 12ch;
-    }
-    .payroll-csv-grid #start-date,
-    .payroll-csv-grid #end-date,
-    .payroll-csv-grid #payroll-email-to {
-      width: 12ch;
-      min-width: 12ch !important;
-    }
-    .auto-email-box {
-      padding: 8px 10px;
-    }
-    .auto-email-header {
-      display: flex;
-      align-items: start;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-    .auto-email-header-title {
-      font-weight: 700;
-      line-height: 1.2;
-    }
-    .auto-email-header .mini-btn {
-      min-height: 34px;
-      padding: 6px 10px;
-    }
-    .auto-email-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px 8px;
-    }
-    .auto-email-top-row,
-    .auto-email-bottom-row {
-      display: contents;
-    }
-    .auto-email-email-field {
-      grid-column: span 2;
-    }
-    .auto-email-catchup-row {
-      grid-column: 1 / -1;
-    }
-    .event-query-controls {
-      grid-template-columns: minmax(120px, 1.1fr) minmax(78px, 0.62fr) minmax(86px, 0.72fr) 10ch 10ch;
-      gap: 6px;
-      align-items: end;
-    }
-    .event-query-controls #query-start,
-    .event-query-controls #query-end {
-      width: 10ch;
-      min-width: 10ch;
-    }
-    .auto-email-grid .checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: #0f172a;
-      min-height: 34px;
-    }
-    .admin-recent-table table {
-      font-size: 12px;
-    }
-    @media (max-width: 1180px) {
-      .admin-desktop-grid {
-        grid-template-columns: 1fr;
-      }
-      .admin-summary-strip {
-        justify-content: flex-start;
-      }
-    }
-    @media (max-width: 720px) {
-      .admin-toolbar-right {
-        width: 100%;
-        align-items: stretch;
-      }
-      .admin-toolbar-actions {
-        justify-content: flex-start;
-      }
-      .admin-summary-strip {
-        justify-content: flex-start;
-      }
-      .admin-search-grid {
-        grid-template-columns: 1fr;
-      }
-      .admin-action-list {
-        grid-template-columns: 1fr;
-      }
-    }
-    @supports (-webkit-touch-callout: none) {
-      @media (max-width: 834px) and (orientation: portrait) {
-        .wrap {
-          max-width: 100%;
-          padding: 10px;
-        }
-        .topbar {
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-        .tabs {
-          gap: 6px;
-        }
-        .tab {
-          padding: 8px 12px;
-          font-size: 13px;
-        }
-        #admin-panel .card {
-          padding: 10px;
-          margin-bottom: 8px;
-          border-radius: 12px;
-        }
-        .admin-toolbar-header {
-          align-items: stretch;
-          gap: 8px;
-        }
-        .admin-toolbar-copy h3 {
-          font-size: 22px;
-          margin-bottom: 2px;
-        }
-        .admin-toolbar-copy .muted {
-          font-size: 12px;
-          line-height: 1.25;
-        }
-        .admin-toolbar-right {
-          width: 100%;
-          align-items: stretch;
-          gap: 6px;
-        }
-        .admin-toolbar-actions {
-          justify-content: flex-start;
-          gap: 6px;
-        }
-        .admin-toolbar-actions .mini-btn {
-          min-height: 34px;
-          padding: 6px 10px;
-          font-size: 12px;
-        }
-        .admin-summary-strip {
-          justify-content: flex-start;
-          gap: 6px;
-        }
-        .admin-summary-item {
-          min-width: 104px;
-          min-height: 44px;
-          padding: 4px 6px;
-        }
-        .admin-summary-label {
-          font-size: 9px;
-        }
-        .admin-summary-value {
-          font-size: 15px;
-        }
-        .admin-desktop-grid {
-          grid-template-columns: 1fr;
-          gap: 8px;
-        }
-        .admin-main-column,
-        .admin-side-column {
-          gap: 8px;
-        }
-        .admin-card-toolbar {
-          gap: 6px;
-          align-items: stretch;
-        }
-        .admin-panel-card h3 {
-          font-size: 20px;
-        }
-        .admin-panel-subtitle {
-          font-size: 12px;
-          line-height: 1.25;
-        }
-        .admin-card-actions {
-          gap: 6px;
-        }
-        #employee-register-card .employee-register-actions {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          width: 100%;
-          gap: 6px;
-        }
-        #employee-register-card .employee-register-actions .employee-register-primary-btn,
-        #employee-register-card .employee-register-actions .mini-btn {
-          min-width: 0;
-          width: 100%;
-          padding: 8px 6px;
-          font-size: 12px;
-        }
-        .admin-form-grid.compact-register-grid {
-          min-width: 0;
-          width: 100%;
-        }
-        .admin-form-grid.compact-register-grid th,
-        .admin-form-grid.compact-register-grid td {
-          padding: 5px 4px;
-        }
-        .payroll-csv-grid {
-          grid-template-columns: 12ch 12ch 12ch;
-          gap: 6px;
-        }
-        .auto-email-box {
-          padding: 8px;
-        }
-        .auto-email-header {
-          gap: 6px;
-          margin-bottom: 4px;
-        }
-        .auto-email-header-title {
-          font-size: 12px;
-        }
-        .auto-email-grid {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 6px;
-        }
-        .auto-email-grid .checkbox-row {
-          min-height: 32px;
-          font-size: 12px;
-        }
-        .auto-email-email-field {
-          grid-column: span 2;
-        }
-        .auto-email-catchup-row {
-          grid-column: 1 / -1;
-        }
-        .event-query-controls {
-          grid-template-columns: minmax(110px, 1fr) minmax(68px, 0.58fr) minmax(76px, 0.68fr) 9.5ch 9.5ch;
-          gap: 6px;
-        }
-        .event-query-controls .field {
-          min-width: 0;
-        }
-        .event-query-controls #query-q,
-        .event-query-controls #query-scope,
-        .event-query-controls #query-event-filter,
-        .event-query-controls #query-start,
-        .event-query-controls #query-end {
-          width: 100% !important;
-          min-width: 0 !important;
-        }
-        .admin-action-list {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 6px;
-        }
-        .admin-action-btn {
-          min-height: 36px;
-          padding: 8px 6px;
-          font-size: 12px;
-          justify-content: center;
-          text-align: center;
-        }
-        #admin-panel .recent-events-scroll {
-          max-height: 116px;
-        }
-      }
-    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -1098,96 +629,22 @@
 	    }
 	    /* Employee manage modal: keep right-side actions visible on iPad */
     #employee-modal-backdrop .employee-manage-scroll {
-      margin-top: 10px;
-      max-height: min(68vh, 760px);
+      margin-top: 8px;
+      max-height: 520px;
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: auto;
       overscroll-behavior: none;
       touch-action: pan-x pan-y;
-      border: 1px solid #d6dee8;
-      border-radius: 12px;
-      background: #ffffff;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
     #employee-modal-backdrop {
-      --emp-code-col-w: 48px;
-      --emp-name-col-w: 90px;
-      --emp-start-col-w: 74px;
-      --emp-hire-col-w: 54px;
-      --emp-term-col-w: 54px;
-      --emp-group-col-w: 68px;
-      --emp-title-col-w: 58px;
-      --emp-active-col-w: 28px;
-      --emp-face-col-w: 40px;
-      --emp-save-col-w: 38px;
-      --emp-control-h: 34px;
-      --emp-control-radius: 10px;
-      --emp-font-size: 12px;
-      --emp-gap: 0.5pt;
-    }
-    #employee-modal-backdrop .employee-manage-toolbar {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: var(--emp-gap) var(--emp-gap);
-      align-items: end;
-      margin-top: 8px;
-    }
-    #employee-modal-backdrop .employee-manage-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    #employee-modal-backdrop .employee-manage-title h3 {
-      margin: 0;
-      font-size: 24px;
-    }
-    #employee-modal-backdrop .employee-manage-count {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 42px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-      font-size: 12px;
-      font-weight: 800;
-    }
-    #employee-modal-backdrop .employee-manage-subtitle {
-      margin: 4px 0 0;
-      color: #64748b;
-      font-size: 12px;
-    }
-    #employee-modal-backdrop .employee-manage-actions {
-      display: flex;
-      gap: var(--emp-gap);
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      align-items: center;
-    }
-    #employee-modal-backdrop .employee-manage-search {
-      width: min(420px, 100%);
-      min-width: 240px;
-      height: var(--emp-control-h);
-      font-size: var(--emp-font-size);
-      padding: 6px 10px;
-      border-radius: var(--emp-control-radius);
+      --emp-code-col-w: 54px;
     }
     #employee-modal-backdrop .employee-manage-scroll table thead th {
       position: sticky;
       top: 0;
-      background: #f4f7fb;
+      background: #f8fafc;
       z-index: 3;
-      border-bottom: 1px solid #d6dee8;
-      font-size: 11px;
-      font-weight: 800;
-      color: #334155;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      padding: 7px 4px;
     }
     #employee-modal-backdrop .employee-manage-scroll .code-col {
       width: var(--emp-code-col-w);
@@ -1218,15 +675,12 @@
       -webkit-user-select: none;
       user-select: none;
       touch-action: none;
-      display: inline-flex;
-      align-items: center;
-      min-width: 40px;
+      display: inline-block;
+      min-width: 42px;
       padding: 0;
-      font-size: 13px;
-      line-height: 1.1;
+      font-size: 11px;
+      line-height: 1.05;
       letter-spacing: 0;
-      text-decoration: none;
-      font-weight: 800;
     }
     #employee-modal-backdrop .employee-manage-scroll table,
     #employee-modal-backdrop .employee-manage-scroll thead,
@@ -1247,37 +701,19 @@
       -webkit-touch-callout: default;
     }
 
-    #employee-modal-backdrop table.tight {
-      table-layout: fixed;
-      min-width: 740px;
-      font-size: var(--emp-font-size);
-    }
+    #employee-modal-backdrop table.tight { table-layout: auto; min-width: 700px; }
 	    #employee-modal-backdrop table.tight th,
 	    #employee-modal-backdrop table.tight td {
         white-space: nowrap;
-        padding: 1px;
+        padding: 0 1px;
       }
-    #employee-modal-backdrop table.tight tbody tr:nth-child(even) td {
-      background: #fbfdff;
-    }
-    #employee-modal-backdrop table.tight tbody tr:hover td {
-      background: #f8fbff;
-    }
 	    #employee-modal-backdrop .emp-sticky {
 	      position: sticky;
 	      background: white;
 	      z-index: 2;
 	    }
-	    #employee-modal-backdrop .emp-sticky.save-col {
-        right: 0;
-        width: var(--emp-save-col-w);
-        min-width: var(--emp-save-col-w);
-      }
-	    #employee-modal-backdrop .emp-sticky.face-col {
-        right: var(--emp-save-col-w);
-        width: var(--emp-face-col-w);
-        min-width: var(--emp-face-col-w);
-      }
+	    #employee-modal-backdrop .emp-sticky.save-col { right: 0; }
+	    #employee-modal-backdrop .emp-sticky.face-col { right: 0; }
     @supports (-webkit-touch-callout: none) {
       @media (max-width: 1180px) {
         #employee-modal-backdrop .emp-sticky { position: static; }
@@ -1291,145 +727,20 @@
     #employee-modal-backdrop .manage-employee-inline {
       display: flex;
       align-items: center;
-      gap: var(--emp-gap);
+      gap: 1px;
     }
     #employee-modal-backdrop .manage-employee-name-input {
-      width: var(--emp-name-col-w) !important;
-      min-width: var(--emp-name-col-w) !important;
-      font-size: var(--emp-font-size) !important;
-      font-weight: 600;
+      width: 110px !important;
+      min-width: 110px !important;
+      font-size: 12px !important;
     }
     #employee-modal-backdrop .manage-employee-date-input {
-      width: 100% !important;
-      min-width: 100% !important;
+      width: 52px !important;
+      min-width: 52px !important;
     }
     #employee-modal-backdrop .manage-employee-select {
-      width: 100% !important;
-      min-width: 100% !important;
-    }
-    #employee-modal-backdrop .employee-manage-scroll input,
-    #employee-modal-backdrop .employee-manage-scroll select,
-    #employee-modal-backdrop .employee-manage-scroll button,
-    #employee-modal-backdrop .employee-manage-search {
-      height: var(--emp-control-h);
-      min-height: var(--emp-control-h);
-      border-radius: var(--emp-control-radius);
-      font-size: var(--emp-font-size) !important;
-      border: 1px solid #cbd5e1;
-      box-sizing: border-box;
-    }
-    #employee-modal-backdrop .employee-manage-scroll input,
-    #employee-modal-backdrop .employee-manage-scroll select {
-      padding: 4px 8px;
-      background: #ffffff;
-      color: #0f172a;
-    }
-    #employee-modal-backdrop .employee-manage-scroll input[type="checkbox"] {
-      width: 16px;
-      min-width: 16px;
-      height: 16px;
-      min-height: 16px;
-      padding: 0;
-      border-radius: 4px;
-    }
-    #employee-modal-backdrop .manage-date-wrap {
-      width: var(--emp-hire-col-w);
-    }
-    #employee-modal-backdrop .manage-date-wrap .manage-date-input {
-      width: var(--emp-hire-col-w);
-      height: var(--emp-control-h);
-    }
-    #employee-modal-backdrop .manage-date-wrap .manage-date-label {
-      padding: 7px 4px;
-      font-size: var(--emp-font-size);
-    }
-    #employee-modal-backdrop .manage-date-wrap.term-date-wrap {
-      width: var(--emp-term-col-w);
-    }
-    #employee-modal-backdrop .manage-date-wrap.term-date-wrap .manage-date-input {
-      width: var(--emp-term-col-w);
-    }
-    #employee-modal-backdrop .fixed-start-picker {
-      width: var(--emp-start-col-w) !important;
-      min-width: var(--emp-start-col-w) !important;
-      height: var(--emp-control-h);
-      border-radius: var(--emp-control-radius);
-    }
-    #employee-modal-backdrop .fixed-start-display {
-      font-size: var(--emp-font-size);
-      padding: 0 4px;
-    }
-    #employee-modal-backdrop #emp-sort-name,
-    #employee-modal-backdrop td:nth-child(2) {
-      width: var(--emp-name-col-w);
-      min-width: var(--emp-name-col-w);
-    }
-    #employee-modal-backdrop #emp-sort-start,
-    #employee-modal-backdrop td:nth-child(3) {
-      width: var(--emp-start-col-w);
-      min-width: var(--emp-start-col-w);
-    }
-    #employee-modal-backdrop #emp-sort-hire,
-    #employee-modal-backdrop td:nth-child(4) {
-      width: var(--emp-hire-col-w);
-      min-width: var(--emp-hire-col-w);
-    }
-    #employee-modal-backdrop #emp-sort-term,
-    #employee-modal-backdrop td:nth-child(5) {
-      width: var(--emp-term-col-w);
-      min-width: var(--emp-term-col-w);
-    }
-    #employee-modal-backdrop #emp-sort-group,
-    #employee-modal-backdrop td:nth-child(6) {
-      width: var(--emp-group-col-w);
-      min-width: var(--emp-group-col-w);
-    }
-    #employee-modal-backdrop #emp-sort-title,
-    #employee-modal-backdrop td:nth-child(7) {
-      width: var(--emp-title-col-w);
-      min-width: var(--emp-title-col-w);
-    }
-    #employee-modal-backdrop #emp-sort-active,
-    #employee-modal-backdrop td:nth-child(8) {
-      width: var(--emp-active-col-w);
-      min-width: var(--emp-active-col-w);
-      text-align: center;
-    }
-    #employee-modal-backdrop th:nth-child(2),
-    #employee-modal-backdrop td:nth-child(2) {
-      padding-right: 0.8px;
-    }
-    #employee-modal-backdrop th:nth-child(3),
-    #employee-modal-backdrop td:nth-child(3) {
-      padding-left: 0.8px;
-      padding-right: 0.8px;
-    }
-    #employee-modal-backdrop th:nth-child(4),
-    #employee-modal-backdrop td:nth-child(4) {
-      padding-left: 0.8px;
-      padding-right: 1.6px;
-    }
-    #employee-modal-backdrop th:nth-child(5),
-    #employee-modal-backdrop td:nth-child(5) {
-      padding-left: 1.6px;
-    }
-    #employee-modal-backdrop th:nth-child(7),
-    #employee-modal-backdrop td:nth-child(7) {
-      padding-right: 0.8px;
-    }
-    #employee-modal-backdrop th:nth-child(8),
-    #employee-modal-backdrop td:nth-child(8) {
-      padding-left: 0.8px;
-      padding-right: 0.8px;
-    }
-    #employee-modal-backdrop th:nth-child(9),
-    #employee-modal-backdrop td:nth-child(9) {
-      padding-left: 0.8px;
-      padding-right: 0.8px;
-    }
-    #employee-modal-backdrop th:nth-child(10),
-    #employee-modal-backdrop td:nth-child(10) {
-      padding-left: 0.8px;
+      width: 76px !important;
+      min-width: 76px !important;
     }
     #employee-modal-backdrop th.sortable-col {
       cursor: pointer;
@@ -1449,38 +760,22 @@
       color: #2563eb;
     }
     #employee-modal-backdrop .face-enroll-btn {
-      background: #2563eb;
+      background: #9ca3af;
       color: #fff;
       border: none;
       border-radius: 999px;
-      padding: 4px 4px;
-      font-size: 11px;
-      font-weight: 800;
+      padding: 5px 6px;
+      font-size: 12px;
       cursor: pointer;
-      min-width: 40px;
+      min-width: 70px;
     }
     #employee-modal-backdrop .face-enroll-btn.done {
-      background: #9ca3af;
-      color: #fff;
+      background: #2563eb;
+      color: #ffffff;
     }
     #employee-modal-backdrop .manage-save-btn {
-      min-width: 38px;
-      padding: 4px 4px;
-      font-size: var(--emp-font-size);
-    }
-    #employee-modal-backdrop .employee-manage-empty {
-      text-align: center;
-      padding: 28px 12px;
-      color: #64748b;
-      font-size: 13px;
-    }
-    @media (max-width: 900px) {
-      #employee-modal-backdrop .employee-manage-toolbar {
-        grid-template-columns: 1fr;
-      }
-      #employee-modal-backdrop .employee-manage-actions {
-        justify-content: flex-start;
-      }
+      min-width: 56px;
+      padding: 5px 7px;
     }
     #face-modal-backdrop #face-capture-btn {
       background: #2563eb !important;
@@ -1685,6 +980,477 @@
       opacity: 0.45;
     }
 
+    body.ios-ipad-ui #employee-modal-backdrop .modal {
+      width: min(1180px, calc(100vw - 20px));
+      max-height: calc(100dvh - 20px);
+      padding: 12px;
+      border-radius: 12px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .row {
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop #emp-search {
+      min-width: 180px !important;
+      height: 32px;
+      padding: 5px 8px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .mini-btn,
+    body.ios-ipad-ui #employee-modal-backdrop .admin-btn,
+    body.ios-ipad-ui #employee-modal-backdrop .sub-btn {
+      min-height: 32px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop #employee-manage-msg {
+      min-height: 16px;
+      margin: 0 0 6px;
+      font-size: 11px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .employee-manage-scroll {
+      margin-top: 0;
+      max-height: min(70dvh, 720px);
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #ffffff;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight {
+      min-width: 760px;
+      table-layout: fixed;
+      font-size: 9.5pt;
+      color: #334155;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight thead th {
+      padding: 4px 4px;
+      border-right: 1px solid #dbe4f0;
+      border-bottom: 1px solid #cbd5e1;
+      background: #eef3fb;
+      color: #334155;
+      font-size: 9.5pt;
+      font-weight: 800;
+      line-height: 1.05;
+      white-space: nowrap;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight thead th:last-child {
+      border-right: none;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td {
+      padding: 2px 2px;
+      height: 28px;
+      border-right: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+      background: #ffffff;
+      white-space: nowrap;
+      color: #334155;
+      font-size: 9.5pt;
+      line-height: 1.05;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:last-child {
+      border-right: none;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .employee-manage-scroll .code-col {
+      width: 40px;
+      min-width: 40px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight th:nth-child(2),
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(2) {
+      width: 92px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight th:nth-child(3),
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(3) {
+      width: 60px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight th:nth-child(4),
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(4) {
+      width: 74px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight th:nth-child(5),
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(5) {
+      width: 108px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight th:nth-child(6),
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(6) {
+      width: 72px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight th:nth-child(7),
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(7) {
+      width: 74px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight th:nth-child(8),
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(8) {
+      width: 34px;
+      text-align: center;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(8) {
+      padding-left: 1px;
+      padding-right: 1px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight th:nth-child(9),
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(9) {
+      width: 50px;
+      text-align: center;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(9) {
+      padding-left: 2px;
+      padding-right: 2px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .employee-manage-scroll th.code-col.emp-left,
+    body.ios-ipad-ui #employee-modal-backdrop .employee-manage-scroll td.code-col.emp-left,
+    body.ios-ipad-ui #employee-modal-backdrop .emp-sticky {
+      position: static !important;
+      left: auto !important;
+      right: auto !important;
+      z-index: auto !important;
+      box-shadow: none !important;
+      background: #ffffff !important;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .employee-manage-scroll th.code-col.emp-left {
+      background: #eef3fb !important;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .employee-manage-scroll thead th.code-col.emp-left,
+    body.ios-ipad-ui #employee-modal-backdrop .employee-manage-scroll thead th.face-col.emp-sticky {
+      position: sticky !important;
+      top: 0 !important;
+      left: auto !important;
+      right: auto !important;
+      z-index: 3 !important;
+      background: #eef3fb !important;
+      box-shadow: none !important;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .employee-manage-scroll .code-col .code-link {
+      min-width: 0;
+      width: 100%;
+      padding: 0;
+      font-size: 10pt;
+      font-weight: 800;
+      text-align: left;
+      color: #334155;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .mini-input,
+    body.ios-ipad-ui #employee-modal-backdrop .mini-select,
+    body.ios-ipad-ui #employee-modal-backdrop .manage-date-wrap .manage-date-label,
+    body.ios-ipad-ui #employee-modal-backdrop .fixed-start-display {
+      height: 24px;
+      padding: 2px 3px;
+      border: 1px solid #cbd5e1;
+      border-radius: 2px;
+      font-size: 9.5pt;
+      line-height: 1.05;
+      background: #ffffff;
+      box-shadow: none;
+      color: #334155;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .manage-employee-name-input {
+      width: 100% !important;
+      min-width: 92px !important;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .manage-employee-date-input {
+      width: 100% !important;
+      min-width: 74px !important;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .manage-date-wrap,
+    body.ios-ipad-ui #employee-modal-backdrop .manage-date-wrap.term-date-wrap {
+      width: 74px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .manage-term-inline {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .manage-term-inline .manage-date-wrap.term-date-wrap {
+      width: 74px;
+      min-width: 74px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .term-clear-btn {
+      min-width: 36px;
+      width: 36px;
+      padding: 2px 2px;
+      border-radius: 4px;
+      font-size: 9pt;
+      line-height: 1.05;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .manage-date-wrap .manage-date-input,
+    body.ios-ipad-ui #employee-modal-backdrop .manage-date-wrap.term-date-wrap .manage-date-input {
+      width: 74px;
+      color: #334155;
+      caret-color: auto;
+      padding-right: 2px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .manage-date-wrap .manage-date-input::-webkit-datetime-edit {
+      color: #334155;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .manage-date-wrap .manage-date-label {
+      display: none;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .manage-employee-select {
+      width: 100% !important;
+      min-width: 72px !important;
+      font-size: 10pt !important;
+      color: #334155 !important;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop table.tight td:nth-child(7) .manage-employee-select {
+      min-width: 74px !important;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .fixed-start-picker {
+      width: 68px !important;
+      min-width: 68px !important;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop td input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .face-enroll-btn,
+    body.ios-ipad-ui #employee-modal-backdrop .manage-save-btn {
+      min-width: 50px;
+      width: 50px;
+      display: block;
+      margin: 0 auto;
+      padding: 2px 2px;
+      border-radius: 5px;
+      font-size: 10pt;
+      line-height: 1.05;
+      color: #334155;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .face-enroll-btn.done {
+      background: #2563eb;
+      color: #ffffff;
+      border: 1px solid #2563eb;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .face-enroll-btn.state-required {
+      background: #111111;
+      color: #ffffff;
+      border: 1px solid #111111;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .face-enroll-btn.state-inactive,
+    body.ios-ipad-ui #employee-modal-backdrop .face-enroll-btn.state-inactive:disabled {
+      background: #475569;
+      color: #ffffff;
+      border: 1px solid #475569;
+      opacity: 1;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .face-enroll-btn.state-terminated,
+    body.ios-ipad-ui #employee-modal-backdrop .face-enroll-btn.state-terminated:disabled {
+      background: #111111;
+      color: #ffffff;
+      opacity: 1;
+      border: 1px solid #111111;
+    }
+    body.ios-ipad-ui #employee-modal-backdrop .face-enroll-btn:disabled {
+      color: #ffffff;
+      opacity: 1;
+    }
+
+    @media (min-width: 1181px) {
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .modal {
+        width: min(1480px, calc(100vw - 48px));
+        max-height: calc(100dvh - 40px);
+        padding: 14px 16px 16px;
+        border-radius: 12px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop h3 {
+        margin: 0 0 10px;
+        font-size: 20px;
+        line-height: 1.15;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .row {
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop #emp-search {
+        min-width: 260px !important;
+        height: 32px;
+        padding: 6px 10px;
+        font-size: 13px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        background: #ffffff;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .mini-btn,
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .admin-btn,
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .sub-btn {
+        min-height: 32px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop #employee-manage-msg {
+        min-height: 18px;
+        margin: 0 0 8px;
+        font-size: 12px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .employee-manage-scroll {
+        margin-top: 0;
+        max-height: min(68dvh, 760px);
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #ffffff;
+        overflow: auto;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight {
+        min-width: 100%;
+        table-layout: fixed;
+        font-size: 12px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight thead th {
+        padding: 7px 8px;
+        border-right: 1px solid #dbe4f0;
+        border-bottom: 1px solid #cbd5e1;
+        background: #eef3fb;
+        color: #334155;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.15;
+        white-space: nowrap;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight thead th:last-child {
+        border-right: none;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight tbody tr:nth-child(even) td {
+        background: #f8fbff;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight tbody tr:hover td {
+        background: #eef6ff;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td {
+        padding: 4px 6px;
+        height: 36px;
+        border-right: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: middle;
+        background: #ffffff;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td:last-child {
+        border-right: none;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .employee-manage-scroll .code-col {
+        width: 52px;
+        min-width: 52px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight th:nth-child(2),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td:nth-child(2) {
+        width: 128px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight th:nth-child(3),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td:nth-child(3) {
+        width: 96px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight th:nth-child(4),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td:nth-child(4),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight th:nth-child(5),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td:nth-child(5) {
+        width: 92px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight th:nth-child(6),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td:nth-child(6),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight th:nth-child(7),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td:nth-child(7) {
+        width: 84px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight th:nth-child(8),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td:nth-child(8) {
+        width: 56px;
+        text-align: center;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight th:nth-child(9),
+      body:not(.ios-ipad-ui) #employee-modal-backdrop table.tight td:nth-child(9) {
+        width: 86px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .employee-manage-scroll .code-col .code-link {
+        min-width: 0;
+        width: 100%;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: #1e40af;
+        font-size: 12px;
+        font-weight: 800;
+        text-align: left;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .employee-manage-scroll th.code-col.emp-left {
+        background: #e7effa;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .employee-manage-scroll td.code-col.emp-left {
+        background: #ffffff;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .manage-employee-inline {
+        gap: 0;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .mini-input,
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .mini-select,
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .manage-date-wrap .manage-date-label {
+        height: 28px;
+        padding: 4px 6px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        font-size: 12px;
+        line-height: 18px;
+        background: #ffffff;
+        box-shadow: none;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .manage-employee-name-input {
+        width: 100% !important;
+        min-width: 128px !important;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .manage-employee-date-input {
+        width: 100% !important;
+        min-width: 92px !important;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .manage-date-wrap {
+        width: 92px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .manage-date-wrap.term-date-wrap {
+        width: 92px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .manage-date-wrap.term-date-wrap .manage-date-input {
+        width: 92px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .manage-employee-select {
+        width: 100% !important;
+        min-width: 84px !important;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .fixed-start-picker {
+        width: 96px !important;
+        min-width: 96px !important;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop td input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .face-enroll-btn,
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .manage-save-btn {
+        min-width: 86px;
+        width: 86px;
+        padding: 4px 4px;
+        border-radius: 5px;
+        font-size: 11px;
+        line-height: 1.05;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .face-enroll-btn {
+        border-radius: 5px;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .emp-sticky.save-col {
+        right: 0;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop .emp-sticky.face-col {
+        right: 0;
+      }
+      body:not(.ios-ipad-ui) #employee-modal-backdrop th.sortable-col::after {
+        font-size: 10px;
+      }
+    }
+
     .field-hint {
 	      font-size: 12px;
 	      color: #64748b;
@@ -1700,19 +1466,12 @@
     #employee-register-card .employee-register-actions {
       display: flex;
       gap: 8px;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       align-items: stretch;
-      width: 100%;
     }
     #employee-register-card .employee-register-actions .employee-register-primary-btn {
-      min-width: 0;
-      flex: 1 1 0;
+      min-width: 150px;
       text-align: center;
-    }
-    #employee-register-card .employee-register-actions .mini-btn {
-      min-width: 0;
-      flex: 1 1 0;
-      white-space: nowrap;
     }
     #employee-register-card .employee-reg-input-row {
       gap: 6px !important;
@@ -1837,241 +1596,189 @@
 	        <div id="admin-lock-msg" class="status"></div>
 	      </div>
 
-      <div id="admin-content" class="hidden admin-workspace">
-        <div class="card admin-toolbar-card" id="admin-dashboard-card">
-          <div class="admin-toolbar-header">
-            <div class="admin-toolbar-copy">
-              <h3 data-i18n-admin="a_dashboard">대시보드</h3>
-              <div class="muted">관리자 메뉴만 데스크톱형 작업공간으로 정리했습니다. 근태관리 첫 화면은 그대로 유지됩니다.</div>
-            </div>
-            <div class="admin-toolbar-right">
-              <div class="admin-toolbar-actions">
-                <button class="sub-btn mini-btn" onclick="openPinModal()" data-i18n-admin="a_change_pin">비밀번호 변경</button>
-                <button class="sub-btn mini-btn" onclick="openSystemBackupModal()" data-i18n-admin="a_system_backup_menu">시스템백업</button>
-                <button class="sub-btn mini-btn" onclick="openResetModal()" data-i18n-admin="a_reset_all">전체 초기화</button>
-                <button class="sub-btn mini-btn" onclick="loadAdminOverview()" data-i18n-admin="a_btn_refresh">새로고침</button>
-              </div>
-            </div>
+      <div id="admin-content" class="hidden">
+			        <div class="card" id="admin-dashboard-card">
+			          <div class="card-header">
+			            <h3 data-i18n-admin="a_dashboard">대시보드</h3>
+                  <div class="dashboard-header-right">
+                    <div class="dashboard-inline-kpi">
+                      <span class="inline-kpi-item"><span data-i18n-admin="a_kpi_active">활성 직원</span> <span id="kpi-active-inline" class="num">0</span></span>
+                      <span class="inline-kpi-item"><span data-i18n-admin="a_kpi_face">얼굴 등록 직원</span> <span id="kpi-face-inline" class="num">0</span></span>
+                    </div>
+  			            <div class="row" style="margin:0;">
+  		              <button class="sub-btn mini-btn" onclick="openPinModal()" data-i18n-admin="a_change_pin">비밀번호 변경</button>
+                      <button class="sub-btn mini-btn" onclick="openSystemBackupModal()" data-i18n-admin="a_system_backup_menu">시스템백업</button>
+		              <button class="sub-btn mini-btn" onclick="openResetModal()" data-i18n-admin="a_reset_all">전체 초기화</button>
+  		            </div>
+                  </div>
+		          </div>
+          <div class="kpi">
+            <div class="box kpi-box-active"><div id="kpi-active" class="value">0</div><div class="label" data-i18n-admin="a_kpi_active">활성 직원</div></div>
+            <div class="box kpi-box-face"><div id="kpi-face" class="value">0</div><div class="label" data-i18n-admin="a_kpi_face">얼굴 등록 직원</div></div>
+            <div class="box kpi-box-template"><div id="kpi-template" class="value">0</div><div class="label" data-i18n-admin="a_kpi_templates">얼굴 템플릿 수</div></div>
+            <div class="box kpi-box-events"><div id="kpi-events" class="value">0</div><div class="label" data-i18n-admin="a_kpi_events_today">오늘 이벤트</div></div>
           </div>
-          <div id="reset-msg" class="status" style="display:none;"></div>
+	          <div id="reset-msg" class="status" style="display:none;"></div>
+	        </div>
+
+        <div class="grid admin-grid">
+				          <div class="card flexcol" id="employee-register-card">
+				            <div class="card-header">
+				              <h3 data-i18n-admin="a_employee_register">직원 등록</h3>
+				              <div class="row employee-register-actions" style="margin:0;">
+				                <button class="btn-blue mini-btn employee-register-primary-btn" onclick="createEmployee()" data-i18n-admin="a_btn_create_employee">등록</button>
+				                <button class="btn-orange mini-btn employee-register-primary-btn" onclick="openEmployeeModal('active')" data-i18n-admin="a_employee_manage">직원 조회/수정</button>
+				                <button class="sub-btn mini-btn employee-register-primary-btn" onclick="openEmployeeModal('terminated')" data-i18n-admin="a_employee_manage_terminated">퇴사 직원 조회/수정</button>
+				                <button class="sub-btn mini-btn" onclick="openEmployeeBulkModal()" data-i18n-admin="a_employee_excel_update">직원정보 엑셀업데이트</button>
+				              </div>
+				            </div>
+				            <div class="card-scroll" id="employee-register-scroll">
+				              <div class="muted" style="margin-top:6px;">
+				                <span data-i18n-admin="a_employee_register_hint">사번은 자동 부여됩니다. 입력 순서: 이름(15) / 시작시간 / 입사일 / 근무위치(5) / 직책(5)</span>
+				              </div>
+	              <div class="hscroll-shell">
+	                <div class="hscroll" id="employee-reg-hscroll">
+	                <div class="row nowrap employee-reg-input-row" style="margin-top:8px; gap:6px;">
+	                  <input id="new-code" placeholder="사번 자동부여 (E0001)" data-i18n-admin-ph="a_ph_emp_code" maxlength="10" readonly aria-readonly="true" style="width:84px; background:#eef2ff; font-weight:700;" />
+	                  <input id="new-name" placeholder="이름" data-i18n-admin-ph="a_ph_emp_name" maxlength="15" style="width:106px; font-size:13px;" />
+	                  <input id="new-fixed-start" type="hidden" value="" />
+                    <div class="fixed-start-picker" title="시작시간" data-i18n-admin-title="a_title_fixed_start" data-target-input="new-fixed-start" style="width:136px;">
+                      <button id="new-fixed-start-display" type="button" class="fixed-start-display is-empty" aria-label="Start time" onclick="openFixedStartModal('new-fixed-start')">미지정</button>
+                    </div>
+				                  <input id="new-hire" type="date" title="입사일" data-i18n-admin-title="a_title_hire" style="width:130px;" />
+					                  <select id="new-group" title="근무위치 (FRONT/BACK)" data-i18n-admin-title="a_title_work_group" style="width:96px;">
+					                  <option value="FRONT" selected>Front</option>
+					                  <option value="BACK">Back</option>
+					                </select>
+				                <select id="new-title" title="직책" data-i18n-admin-title="a_title_title" style="width:96px;">
+				                  <option value="STAFF" selected>Staff</option>
+				                  <option value="AM">AM</option>
+				                  <option value="GM">GM</option>
+				                  <option value="OTHER">Other</option>
+				                </select>
+				                </div>
+				                </div>
+				              </div>
+				              <div id="employee-msg" class="status"></div>
+				            </div>
+				          </div>
+
+          <!-- 직원 조회/수정은 버튼으로 열리는 모달에서 처리 -->
         </div>
 
-        <div class="admin-desktop-grid">
-          <div class="admin-main-column">
-            <div class="card flexcol admin-panel-card" id="employee-register-card">
-              <div class="admin-card-toolbar">
-                <div>
-                  <h3 data-i18n-admin="a_employee_register">직원 등록</h3>
-                  <p class="admin-panel-subtitle" data-i18n-admin="a_employee_register_hint">사번은 자동 부여됩니다. 입력 순서: 이름(15) / 시작시간 / 입사일 / 근무위치(5) / 직책(5)</p>
-                </div>
-                <div class="admin-card-actions employee-register-actions">
-                  <button class="btn-blue mini-btn employee-register-primary-btn" onclick="createEmployee()" data-i18n-admin="a_btn_create_employee">등록</button>
-                  <button class="btn-orange mini-btn employee-register-primary-btn" onclick="openEmployeeModal()" data-i18n-admin="a_employee_manage">직원 조회/수정</button>
-                  <button class="sub-btn mini-btn" onclick="openEmployeeBulkModal()" data-i18n-admin="a_employee_excel_update">직원정보 엑셀업데이트</button>
-                </div>
-              </div>
-              <div class="card-scroll" id="employee-register-scroll">
-                <div class="admin-note-box">10:01 스타일처럼 입력 필드를 한 줄 폼 대신 작업 표로 정리했습니다. 저장 로직은 기존과 동일합니다.</div>
-                <div class="hscroll-shell">
-                  <div class="hscroll" id="employee-reg-hscroll">
-                    <div class="admin-form-surface compact-surface">
-                      <table class="admin-form-grid compact-register-grid">
-                        <thead>
-                          <tr>
-                            <th data-i18n-admin="a_th_code">사번</th>
-                            <th data-i18n-admin="a_th_name">이름</th>
-                            <th data-i18n-admin="a_th_fixed_start">근무시작</th>
-                            <th data-i18n-admin="a_th_hire">입사일</th>
-                            <th data-i18n-admin="a_th_group">근무위치</th>
-                            <th data-i18n-admin="a_th_title">직책</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td class="emp-code-cell">
-                              <input id="new-code" placeholder="사번 자동부여 (E0001)" data-i18n-admin-ph="a_ph_emp_code" maxlength="10" readonly aria-readonly="true" />
-                            </td>
-                            <td>
-                              <input id="new-name" placeholder="이름" data-i18n-admin-ph="a_ph_emp_name" maxlength="15" />
-                            </td>
-                            <td>
-                              <input id="new-fixed-start" type="hidden" value="" />
-                              <div class="fixed-start-picker" title="시작시간" data-i18n-admin-title="a_title_fixed_start" data-target-input="new-fixed-start">
-                                <button id="new-fixed-start-display" type="button" class="fixed-start-display is-empty" aria-label="Start time" onclick="openFixedStartModal('new-fixed-start')">미지정</button>
-                              </div>
-                            </td>
-                            <td>
-                              <input id="new-hire" type="date" title="입사일" data-i18n-admin-title="a_title_hire" />
-                            </td>
-                            <td>
-                              <select id="new-group" title="근무위치 (FRONT/BACK)" data-i18n-admin-title="a_title_work_group">
-                                <option value="FRONT" selected>Front</option>
-                                <option value="BACK">Back</option>
-                              </select>
-                            </td>
-                            <td>
-                              <select id="new-title" title="직책" data-i18n-admin-title="a_title_title">
-                                <option value="STAFF" selected>Staff</option>
-                                <option value="AM">AM</option>
-                                <option value="GM">GM</option>
-                                <option value="OTHER">Other</option>
-                              </select>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-                <div id="employee-msg" class="status"></div>
-              </div>
-            </div>
+		        <div class="card flexcol" id="payroll-csv-card">
+		          <div class="card-header">
+		            <h3 data-i18n-admin="a_payroll_csv">급여 CSV</h3>
+		            <div class="row" style="margin:0;">
+		              <button class="clock-in mini-btn" onclick="downloadCsv()" data-i18n-admin="a_btn_csv_download">OnPay 다운로드</button>
+		              <button class="break-end mini-btn" onclick="emailCsv()" data-i18n-admin="a_btn_csv_email">OnPay+CSV 이메일 전송</button>
+		            </div>
+		          </div>
+		          <div class="card-scroll" id="payroll-csv-scroll">
+		            <div class="muted" style="margin-top:6px;" data-i18n-admin="a_payroll_hint">
+		              OnPay 다운로드는 CSV(OnPay 포맷)이며, OnPay+CSV 이메일 전송/자동 이메일 전송은 OnPay CSV + Excel XLSX 2개를 함께 첨부합니다.
+		            </div>
+			          <div class="row" style="gap:18px; flex-wrap:wrap;">
+		              <div style="display:flex; align-items:center; gap:10px;">
+		                <span class="field-hint" data-i18n-admin="a_payroll_start">시작일</span>
+		                <input id="start-date" type="date" aria-label="pay period start date" style="width:156px;" />
+		              </div>
+		              <div style="display:flex; align-items:center; gap:10px;">
+		                <span class="field-hint" data-i18n-admin="a_payroll_end">종료일</span>
+		                <input id="end-date" type="date" aria-label="pay period end date" style="width:156px;" />
+		              </div>
+			            <input id="payroll-email-to" name="tlj-payroll-email-to" type="email" inputmode="email" autocomplete="off" placeholder="payroll@example.com" data-i18n-admin-ph="a_ph_payroll_email_to" style="min-width: 260px;" />
+			          </div>
+		            <div class="danger">
+		              <div style="font-weight:700; margin-bottom:6px;" data-i18n-admin="a_auto_email_title">자동 이메일 전송(1주/2주) OnPay 업로드 전용파일</div>
+		              <div class="row" style="margin-top:6px; gap:12px; flex-wrap:wrap;">
+		                <label style="display:flex; align-items:center; gap:8px; color:#0f172a;">
+		                  <input id="auto-payroll-enabled" type="checkbox" />
+		                  <span data-i18n-admin="a_auto_email_enable">자동 전송 사용</span>
+		                </label>
+		                <input id="auto-payroll-email" type="email" placeholder="자동 전송 이메일" data-i18n-admin-ph="a_ph_auto_email" style="min-width: 260px;" />
+                    <label style="display:flex; align-items:center; gap:6px; color:#0f172a;">
+                      <span data-i18n-admin="a_auto_email_cycle">전송 주기</span>
+                      <select id="auto-payroll-cycle-weeks" style="width:120px;">
+                        <option value="1" data-i18n-admin="a_opt_cycle_1w">1주</option>
+                        <option value="2" selected data-i18n-admin="a_opt_cycle_2w">2주</option>
+                      </select>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; color:#0f172a;">
+                      <span data-i18n-admin="a_auto_email_anchor_weekday">기준요일</span>
+                      <select id="auto-payroll-anchor-weekday" style="width:132px;">
+                        <option value="0" selected data-i18n-admin="a_weekday_mon">월요일</option>
+                        <option value="1" data-i18n-admin="a_weekday_tue">화요일</option>
+                        <option value="2" data-i18n-admin="a_weekday_wed">수요일</option>
+                        <option value="3" data-i18n-admin="a_weekday_thu">목요일</option>
+                        <option value="4" data-i18n-admin="a_weekday_fri">금요일</option>
+                        <option value="5" data-i18n-admin="a_weekday_sat">토요일</option>
+                        <option value="6" data-i18n-admin="a_weekday_sun">일요일</option>
+                      </select>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; color:#0f172a;">
+                      <span data-i18n-admin="a_auto_email_anchor_start">기준 시작일</span>
+                      <input id="auto-payroll-anchor-start" type="date" style="width:156px;" />
+                    </label>
+		                <label style="display:flex; align-items:center; gap:6px; color:#0f172a;">
+		                  <input id="auto-payroll-catchup-once" type="checkbox" checked />
+		                  <span data-i18n-admin="a_auto_email_catchup">누락 시 1회 보정 발송</span>
+		                </label>
+		                <button class="admin-btn mini-btn" onclick="savePayrollAutoEmail()" data-i18n-admin="a_btn_save">저장</button>
+		              </div>
+		              <div class="muted" style="margin-top:6px;">
+		                <span data-i18n-admin="a_auto_email_help">자동 전송 2주 주기(예: 월요일 기준)로 설정 한 경우, 기간 종료 다음날 1:30AM(ET)에 이메일 자동 발송. 누락 시 1회 보정 발송.</span>
+		              </div>
+		              <div id="auto-payroll-msg" class="status"></div>
+		              <div id="auto-payroll-status" class="muted" style="margin-top:6px;"></div>
+		            </div>
+		            <div id="csv-msg" class="status"></div>
+		          </div>
+		        </div>
 
-            <div class="card flexcol admin-panel-card" id="payroll-csv-card">
-              <div class="admin-card-toolbar">
-                <div>
-                  <h3 data-i18n-admin="a_payroll_csv">급여 CSV</h3>
-                  <p class="admin-panel-subtitle" data-i18n-admin="a_payroll_hint">ADP 다운로드는 CSV(ADP 포맷)이며, ADP+CSV 이메일 전송/자동 이메일 전송은 ADP CSV + Excel XLSX 2개를 함께 첨부합니다.</p>
-                </div>
-                <div class="admin-card-actions">
-                  <button class="clock-in mini-btn" onclick="downloadCsv()" data-i18n-admin="a_btn_csv_download">ADP 다운로드</button>
-                  <button class="break-end mini-btn" onclick="emailCsv()" data-i18n-admin="a_btn_csv_email">ADP+CSV 이메일 전송</button>
-                </div>
+	        <div class="card">
+              <div class="card-header" style="margin-bottom:6px;">
+		            <h3 data-i18n-admin="a_event_query">이벤트 조회</h3>
+                <button id="query-search-btn-top" class="admin-btn mini-btn query-header-search" onclick="queryEvents(1)" data-i18n-admin="a_btn_search">조회</button>
               </div>
-              <div class="card-scroll" id="payroll-csv-scroll">
-                <div class="admin-search-grid payroll-csv-grid">
-                  <div class="field">
-                    <label for="start-date" class="field-hint" data-i18n-admin="a_payroll_start">시작일</label>
-                    <input id="start-date" type="date" aria-label="pay period start date" />
-                  </div>
-                  <div class="field">
-                    <label for="end-date" class="field-hint" data-i18n-admin="a_payroll_end">종료일</label>
-                    <input id="end-date" type="date" aria-label="pay period end date" />
-                  </div>
-                  <div class="field">
-                    <label for="payroll-email-to" class="field-hint">Recipient email</label>
-                    <input id="payroll-email-to" name="tlj-payroll-email-to" type="email" inputmode="email" autocomplete="off" placeholder="payroll@example.com" data-i18n-admin-ph="a_ph_payroll_email_to" />
-                  </div>
-                </div>
-                <div class="danger auto-email-box">
-                  <div class="auto-email-header">
-                    <div class="auto-email-header-title" data-i18n-admin="a_auto_email_title">자동 이메일 전송(1주/2주) ADP 업로드 전용파일</div>
-                    <button class="admin-btn mini-btn" onclick="savePayrollAutoEmail()" data-i18n-admin="a_btn_save">저장</button>
-                  </div>
-                  <div class="admin-search-grid auto-email-grid">
-                    <div class="auto-email-top-row">
-                      <label class="checkbox-row">
-                        <span data-i18n-admin="a_auto_email_cycle">전송 주기</span>
-                        <select id="auto-payroll-cycle-weeks">
-                          <option value="1" data-i18n-admin="a_opt_cycle_1w">1주</option>
-                          <option value="2" selected data-i18n-admin="a_opt_cycle_2w">2주</option>
-                        </select>
-                      </label>
-                      <label class="checkbox-row">
-                        <span data-i18n-admin="a_auto_email_anchor_weekday">기준요일</span>
-                        <select id="auto-payroll-anchor-weekday">
-                          <option value="0" selected data-i18n-admin="a_weekday_mon">월요일</option>
-                          <option value="1" data-i18n-admin="a_weekday_tue">화요일</option>
-                          <option value="2" data-i18n-admin="a_weekday_wed">수요일</option>
-                          <option value="3" data-i18n-admin="a_weekday_thu">목요일</option>
-                          <option value="4" data-i18n-admin="a_weekday_fri">금요일</option>
-                          <option value="5" data-i18n-admin="a_weekday_sat">토요일</option>
-                          <option value="6" data-i18n-admin="a_weekday_sun">일요일</option>
-                        </select>
-                      </label>
-                      <label class="checkbox-row">
-                        <span data-i18n-admin="a_auto_email_anchor_start">기준 시작일</span>
-                        <input id="auto-payroll-anchor-start" type="date" />
-                      </label>
-                    </div>
-                    <div class="auto-email-bottom-row">
-                      <label class="checkbox-row">
-                        <input id="auto-payroll-enabled" type="checkbox" />
-                        <span data-i18n-admin="a_auto_email_enable">자동 전송 사용</span>
-                      </label>
-                      <div class="field auto-email-email-field">
-                        <label for="auto-payroll-email" class="field-hint">Auto email</label>
-                        <input id="auto-payroll-email" type="email" placeholder="자동 전송 이메일" data-i18n-admin-ph="a_ph_auto_email" />
-                      </div>
-                      <label class="checkbox-row auto-email-catchup-row">
-                        <input id="auto-payroll-catchup-once" type="checkbox" checked />
-                        <span data-i18n-admin="a_auto_email_catchup">누락 시 1회 보정 발송</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div class="muted" style="margin-top:6px;">
-                    <span data-i18n-admin="a_auto_email_help">자동 전송 2주 주기(예: 월요일 기준)로 설정 한 경우, 기간 종료 다음날 1:30AM(ET)에 이메일 자동 발송. 누락 시 1회 보정 발송.</span>
-                  </div>
-                  <div id="auto-payroll-msg" class="status"></div>
-                  <div id="auto-payroll-status" class="muted" style="margin-top:6px;"></div>
-                </div>
-                <div id="csv-msg" class="status"></div>
-              </div>
-            </div>
+		          <div class="row event-query-controls">
+		            <input id="query-q" placeholder="사번/이름 (전체 조회 시 비움)" data-i18n-admin-ph="a_ph_query_q" style="min-width: 260px;" />
+		            <select id="query-scope" style="width:160px;">
+                  <option value="ALL" data-i18n-admin="a_query_scope_all">전체</option>
+                  <option value="EMPLOYEE_CODE" data-i18n-admin="a_query_scope_code">사번별</option>
+                  <option value="EMPLOYEE_NAME" data-i18n-admin="a_query_scope_name">이름별</option>
+                </select>
+                <select id="query-event-filter" style="width:170px;">
+                  <option value="ALL" data-i18n-admin="a_query_type_all">전체(혼합)</option>
+                  <option value="CLOCK" data-i18n-admin="a_query_type_clock">출/퇴근</option>
+                  <option value="BREAK" data-i18n-admin="a_query_type_break">브레이크</option>
+                </select>
+		            <input id="query-start" type="date" aria-label="query start date" style="width:156px;" />
+		            <input id="query-end" type="date" aria-label="query end date" style="width:156px;" />
+		            <button id="query-search-btn" class="admin-btn" onclick="queryEvents(1)" data-i18n-admin="a_btn_search">조회</button>
+		          </div>
+	          <div class="muted" style="margin-top:6px;" data-i18n-admin="a_query_help">기간 경계(ET): 지정기간 이벤트 원본(시:분:초)+근무/브레이크 합계를 팝업에서 조회 가능합니다.</div>
+	          <div id="query-msg" class="status"></div>
+	        </div>
 
-            <div class="card admin-panel-card">
-              <div class="admin-card-toolbar">
-                <div>
-                  <h3 data-i18n-admin="a_event_query">이벤트 조회</h3>
-                  <p class="admin-panel-subtitle" data-i18n-admin="a_query_help">기간 경계(ET): 지정기간 이벤트 원본(시:분:초)+근무/브레이크 합계를 팝업에서 조회 가능합니다.</p>
-                </div>
-                <div class="admin-card-actions">
-                  <button id="query-search-btn-top" class="admin-btn mini-btn query-header-search" onclick="queryEvents(1)" data-i18n-admin="a_btn_search">조회</button>
-                </div>
-              </div>
-              <div class="admin-search-grid event-query-controls">
-                <div class="field">
-                  <label for="query-q" class="field-hint">Employee</label>
-                  <input id="query-q" placeholder="사번/이름 (전체 조회 시 비움)" data-i18n-admin-ph="a_ph_query_q" />
-                </div>
-                <div class="field">
-                  <label for="query-scope" class="field-hint">Scope</label>
-                  <select id="query-scope">
-                    <option value="ALL" data-i18n-admin="a_query_scope_all">전체</option>
-                    <option value="EMPLOYEE_CODE" data-i18n-admin="a_query_scope_code">사번별</option>
-                    <option value="EMPLOYEE_NAME" data-i18n-admin="a_query_scope_name">이름별</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="query-event-filter" class="field-hint">Type</label>
-                  <select id="query-event-filter">
-                    <option value="ALL" data-i18n-admin="a_query_type_all">전체(혼합)</option>
-                    <option value="CLOCK" data-i18n-admin="a_query_type_clock">출/퇴근</option>
-                    <option value="BREAK" data-i18n-admin="a_query_type_break">브레이크</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="query-start" class="field-hint">From</label>
-                  <input id="query-start" type="date" aria-label="query start date" />
-                </div>
-                <div class="field">
-                  <label for="query-end" class="field-hint">To</label>
-                  <input id="query-end" type="date" aria-label="query end date" />
-                </div>
-              </div>
-              <div id="query-msg" class="status"></div>
-            </div>
+	        <div class="card">
+          <div class="card-header" style="margin-bottom:8px;">
+            <h3 data-i18n-admin="a_recent_events">최근 이벤트</h3>
+            <button class="sub-btn mini-btn" onclick="loadAdminOverview()" data-i18n-admin="a_btn_refresh">새로고침</button>
           </div>
+	          <div class="recent-events-scroll">
+	            <table>
+	              <thead>
+	                <tr><th data-i18n-admin="a_th_time_et">시간(ET)</th><th data-i18n-admin="a_th_code">사번</th><th data-i18n-admin="a_th_name">이름</th><th data-i18n-admin="a_th_type">유형</th><th data-i18n-admin="a_th_method">방법</th></tr>
+	              </thead>
+	              <tbody id="recent-events-body"></tbody>
+	            </table>
+	          </div>
+	        </div>
 
-          <div class="admin-side-column">
-            <div class="card admin-panel-card admin-recent-table">
-              <div class="card-header" style="margin-bottom:8px;">
-                <h3 data-i18n-admin="a_recent_events">최근 이벤트</h3>
-                <button class="sub-btn mini-btn" onclick="loadAdminOverview()" data-i18n-admin="a_btn_refresh">새로고침</button>
-              </div>
-              <div class="recent-events-scroll">
-                <table>
-                  <thead>
-                    <tr><th data-i18n-admin="a_th_time_et">시간(ET)</th><th data-i18n-admin="a_th_code">사번</th><th data-i18n-admin="a_th_name">이름</th><th data-i18n-admin="a_th_type">유형</th><th data-i18n-admin="a_th_method">방법</th></tr>
-                  </thead>
-                  <tbody id="recent-events-body"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
+	  </div>
 
   <div id="query-modal-backdrop" class="modal-backdrop hidden">
     <div class="modal">
@@ -2161,26 +1868,18 @@
     </div>
   </div>
 
-  <div id="employee-modal-backdrop" class="modal-backdrop hidden">
-    <div class="modal">
-      <div class="employee-manage-toolbar">
-        <div>
-          <div class="employee-manage-title">
-            <h3 data-i18n-admin="a_employee_manage">직원 조회/수정</h3>
-            <span id="employee-manage-count" class="employee-manage-count">0</span>
-          </div>
-          <div class="employee-manage-subtitle">모든 필드를 한 화면에서 보고 바로 수정할 수 있도록 촘촘한 관리 표로 정리했습니다.</div>
-        </div>
-        <div class="employee-manage-actions">
-          <input id="emp-search" class="employee-manage-search" placeholder="사번/이름 검색" data-i18n-admin-ph="a_ph_emp_search" oninput="renderEmployeeManage()" />
-          <button class="sub-btn mini-btn" onclick="loadAdminEmployees()" data-i18n-admin="a_btn_refresh">새로고침</button>
-          <button id="employee-bulk-save-btn" class="btn-blue mini-btn" onclick="saveEmployeesBulk()">변경 저장 (0)</button>
-          <button class="sub-btn mini-btn" onclick="closeEmployeeModal()" data-i18n-admin="a_btn_close">닫기</button>
-        </div>
-      </div>
-      <div id="employee-manage-msg" class="status"></div>
-      <div class="employee-manage-scroll">
-        <table class="tight">
+	  <div id="employee-modal-backdrop" class="modal-backdrop hidden">
+	    <div class="modal">
+	      <h3 id="employee-manage-title" data-i18n-admin="a_employee_manage">직원 조회/수정</h3>
+	      <div class="row">
+	        <input id="emp-search" placeholder="사번/이름 검색" data-i18n-admin-ph="a_ph_emp_search" style="min-width: 220px;" oninput="renderEmployeeManage()" />
+	        <button class="sub-btn mini-btn" onclick="loadAdminEmployees()" data-i18n-admin="a_btn_refresh">새로고침</button>
+        <button id="employee-bulk-save-btn" class="btn-blue mini-btn" onclick="saveEmployeesBulk()">변경 저장 (0)</button>
+	        <button class="sub-btn mini-btn" onclick="closeEmployeeModal()" data-i18n-admin="a_btn_close">닫기</button>
+	      </div>
+	      <div id="employee-manage-msg" class="status"></div>
+	      <div class="employee-manage-scroll">
+		        <table class="tight">
 		          <thead>
 		            <tr>
 		              <th id="emp-sort-code" class="sortable-col sorted-asc emp-left code-col" onclick="toggleEmployeeSort('employee_code')" data-i18n-admin="a_th_code">사번</th>
@@ -2192,7 +1891,6 @@
                               <th id="emp-sort-title" class="sortable-col" onclick="toggleEmployeeSort('title')" data-i18n-admin="a_th_title">직책</th>
                               <th id="emp-sort-active" class="sortable-col" onclick="toggleEmployeeSort('is_active')" data-i18n-admin="a_th_active">활성</th>
                               <th id="emp-sort-face" class="emp-sticky face-col sortable-col" onclick="toggleEmployeeSort('face_template_count')" data-i18n-admin="a_th_face">얼굴</th>
-                              <th class="emp-sticky save-col" data-i18n-admin="a_th_save">저장</th>
 		            </tr>
 		          </thead>
 		          <tbody id="employees-manage-body"></tbody>
@@ -2244,7 +1942,7 @@
       <h3 data-i18n-admin="a_term_modal_title">퇴사일 관리</h3>
       <p class="muted" data-i18n-admin="a_term_modal_help">퇴사일을 선택하거나 삭제할 수 있습니다.</p>
       <div class="row">
-        <input id="term-date-modal-input" class="mini-input" type="date" style="min-width: 200px;" />
+        <input id="term-date-modal-input" class="mini-input manage-date-input manage-employee-date-input" type="date" style="min-width: 200px;" />
       </div>
       <div class="row">
         <button class="sub-btn" onclick="clearTerminationDateModal()" data-i18n-admin="a_btn_delete">삭제</button>
@@ -2292,14 +1990,12 @@
   <div id="system-backup-modal-backdrop" class="modal-backdrop hidden">
     <div class="modal" style="max-width:920px; width:min(92vw, 920px);">
       <h3 data-i18n-admin="a_system_backup">시스템백업</h3>
-      <p class="muted" data-i18n-admin="a_system_backup_help">전체 데이터 백업과 SW 포함 통합백업 생성, 목록 조회, 복구를 관리합니다. 중요한 작업이므로 비밀번호가 필요합니다.</p>
+      <p class="muted" data-i18n-admin="a_system_backup_help">전체 데이터 백업 생성, 목록 조회, 복구를 관리합니다. 중요한 작업이므로 비밀번호가 필요합니다.</p>
       <div class="row">
         <input id="system-backup-password" type="password" data-i18n-admin-ph="a_ph_password" placeholder="비밀번호" style="min-width:220px;" onkeydown="handleSystemBackupPasswordKeydown(event)" />
         <button class="sub-btn" onclick="loadSystemBackups()" data-i18n-admin="a_btn_refresh">새로고침</button>
         <button class="admin-btn" onclick="runSystemBackup()" data-i18n-admin="a_btn_system_backup_run">전체데이터 백업</button>
-        <button id="software-backup-btn-t" class="admin-btn" onclick="runSoftwareBackup('t')" data-i18n-admin="a_btn_system_backup_software_t">SW 포함 통합백업 (t)</button>
-        <button id="software-backup-btn-time" class="admin-btn" onclick="runSoftwareBackup('time')" data-i18n-admin="a_btn_system_backup_software_time">SW 포함 통합백업 (time)</button>
-        <button id="software-backup-btn-cloudfront" class="admin-btn" onclick="runSoftwareBackup('cloudfront')" data-i18n-admin="a_btn_system_backup_software_cloudfront">SW 포함 통합백업 (cloudfront)</button>
+        <button id="image-full-backup-btn" class="admin-btn" onclick="runImageFullBackup()" data-i18n-admin="a_btn_system_backup_image_full">Image 전체 백업</button>
         <button class="sub-btn" onclick="closeSystemBackupModal()" data-i18n-admin="a_btn_close">닫기</button>
       </div>
       <div class="row">
@@ -2314,12 +2010,11 @@
             <thead>
               <tr>
                 <th data-i18n-admin="a_backup_kind">구분</th>
-                <th data-i18n-admin="a_backup_target">대상</th>
                 <th data-i18n-admin="a_backup_year">연도</th>
                 <th data-i18n-admin="a_backup_period">기간</th>
                 <th data-i18n-admin="a_backup_created">생성시각</th>
                 <th data-i18n-admin="a_backup_size">크기</th>
-                <th colspan="2" data-i18n-admin="a_backup_action">작업</th>
+                <th colspan="3" data-i18n-admin="a_backup_action">작업</th>
               </tr>
             </thead>
             <tbody id="system-backup-tbody">
@@ -2353,7 +2048,7 @@
 	  </div>
 
   <script>
-    const deviceId = "{{ device_id }}";
+    const deviceId = "ipad-kiosk-1";
     const FACE_API_LOCAL_URL = '/static/vendor/face-api/face-api.js?v=20260309';
     const FACE_API_CDN_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js';
     const MODEL_URL_LOCAL = '/static/vendor/face-api/model/';
@@ -2433,6 +2128,8 @@
 	    let uiLang = 'en';
 	    let suggestedNextCode = '';
     let employeeEditId = null;
+    let employeeManageMode = 'active';
+    let lastEmployeeSaveError = '';
     let employeeSortKey = 'employee_code';
     let employeeSortDir = 'asc';
     window._empEditCode = '';
@@ -2449,6 +2146,7 @@
 	        k_waiting: 'Waiting for employee...',
 	        k_verified_press: 'Verified. Please press a time button.',
 	        k_unknown_face: 'Face not registered. Please contact an admin.',
+	        k_inactive_face_block: 'Inactive or terminated employees cannot use face recognition.',
 	        k_ambiguous: 'Multiple matches. Please try again.',
 	        k_api_error: 'Identify API error',
 	        k_need_face: 'Verify face first, then try again.',
@@ -2490,6 +2188,7 @@
 	        k_waiting: '직원 대기중입니다.',
 	        k_verified_press: '인증 성공. 근태 버튼을 눌러주세요.',
 	        k_unknown_face: '등록되지 않은 얼굴입니다. 관리자에게 문의하세요.',
+	        k_inactive_face_block: '비활성 또는 퇴사 직원은 얼굴 인식을 사용할 수 없습니다.',
 	        k_ambiguous: '인식이 애매합니다. 다시 시도하세요.',
 	        k_api_error: '인식 API 오류',
 	        k_need_face: '얼굴 인증 후 다시 시도하세요.',
@@ -2531,6 +2230,7 @@
 	        k_waiting: 'Esperando empleado...',
 	        k_verified_press: 'Verificado. Presiona un boton de tiempo.',
 	        k_unknown_face: 'Rostro no registrado. Contacta al administrador.',
+	        k_inactive_face_block: 'Los empleados inactivos o retirados no pueden usar reconocimiento facial.',
 	        k_ambiguous: 'Coincidencia ambigua. Intenta de nuevo.',
 	        k_api_error: 'Error de identificacion',
 	        k_need_face: 'Verifica tu rostro primero y vuelve a intentar.',
@@ -2622,6 +2322,20 @@
       if (!code || !status) return;
       localStatusByEmployee[code] = status;
       saveLocalStatusMap();
+    }
+
+    function findAdminEmployeeByCode(employeeCode) {
+      const code = String(employeeCode || '').trim().toUpperCase();
+      if (!code) return null;
+      return (adminEmployees || []).find((row) => String(row.employee_code || '').trim().toUpperCase() === code) || null;
+    }
+
+    function isEmployeeRecognitionBlocked(employeeCode, data = null) {
+      const row = findAdminEmployeeByCode(employeeCode);
+      const terminationDate = String(data?.termination_date || row?.termination_date || '').trim();
+      const activeFlag = data?.is_active;
+      const isActive = typeof activeFlag === 'boolean' ? activeFlag : (row ? !!row.is_active : true);
+      return !!terminationDate || !isActive;
     }
 
     function applyLocalEventStatus(employeeCode, eventType) {
@@ -3210,6 +2924,7 @@
         a_kpi_events_today: '오늘 이벤트',
         a_employee_register: '직원 등록',
         a_employee_manage: '직원 조회/수정',
+        a_employee_manage_terminated: '퇴사 직원 조회/수정',
         a_employee_edit_title: '직원 수정',
         a_employee_excel_update: '직원정보 엑셀업데이트',
 	        a_employee_register_hint: '사번은 자동 부여됩니다. 입력 순서: 이름(15) / 시작시간 / 입사일 / 근무위치(5) / 직책(5)',
@@ -3229,13 +2944,13 @@
         a_btn_modify: '수정',
         a_payroll_csv: '급여 CSV',
         a_payroll_hint:
-          'ADP 다운로드는 CSV(ADP 포맷)이며, ADP+CSV 이메일 전송/자동 이메일 전송은 ADP CSV + Excel XLSX 2개를 함께 첨부합니다.',
+          'OnPay 다운로드는 CSV(OnPay 포맷)이며, OnPay+CSV 이메일 전송/자동 이메일 전송은 OnPay CSV + Excel XLSX 2개를 함께 첨부합니다.',
         a_payroll_start: '시작일',
         a_payroll_end: '종료일',
         a_ph_payroll_email_to: '수신 받을 이메일',
-        a_btn_csv_download: 'ADP 다운로드',
-        a_btn_csv_email: 'ADP+CSV 이메일 전송',
-        a_auto_email_title: '자동 이메일 전송(1주/2주) ADP 업로드 전용파일',
+        a_btn_csv_download: 'OnPay 다운로드',
+        a_btn_csv_email: 'OnPay+CSV 이메일 전송',
+        a_auto_email_title: '자동 이메일 전송(1주/2주) OnPay 업로드 전용파일',
         a_auto_email_enable: '자동 전송 사용',
         a_ph_auto_email: '자동 전송 이메일',
         a_auto_email_cycle: '전송 주기',
@@ -3301,17 +3016,15 @@
         a_bulk_help: '직원 엑셀 다운로드 후 수정하여 업로드하면 일괄 반영됩니다. (employee_code 기준)',
         a_btn_excel_download: '직원 엑셀 다운로드',
         a_btn_excel_upload: '엑셀 업로드 반영',
-        a_system_backup_help: '전체 데이터 백업과 SW 포함 통합백업 생성, 목록 조회, 복구를 관리합니다. 중요한 작업이므로 비밀번호가 필요합니다.',
+        a_system_backup_help: '전체 데이터 백업 생성, 목록 조회, 복구를 관리합니다. 중요한 작업이므로 비밀번호가 필요합니다.',
         a_system_backup_list_help: '복구할 백업을 선택한 뒤 복구 버튼을 눌러 주세요.',
         a_btn_system_backup_run: '전체데이터 백업',
-        a_btn_system_backup_software_t: 'SW 포함 통합백업 (t)',
-        a_btn_system_backup_software_time: 'SW 포함 통합백업 (time)',
-        a_btn_system_backup_software_cloudfront: 'SW 포함 통합백업 (cloudfront)',
+        a_btn_system_backup_image_full: 'Image 전체 백업',
         a_btn_system_backup_upload: '백업 업로드',
         a_btn_system_backup_restore: '전체데이터 복구',
+        a_btn_system_backup_delete: '삭제',
         a_system_backup_empty: '백업 목록이 없습니다.',
         a_backup_kind: '구분',
-        a_backup_target: '대상',
         a_backup_year: '연도',
         a_backup_period: '기간',
         a_backup_created: '생성시각',
@@ -3319,7 +3032,7 @@
         a_backup_action: '작업',
         a_backup_kind_annual: '연도백업',
         a_backup_kind_recovery: '비상복구',
-        a_backup_kind_image: '이미지백업',
+        a_backup_kind_image: 'Image 백업',
         a_face_title: '얼굴 등록 (5회 이상 캡처 권장: 앞/위/아래/좌/우)',
         a_face_help: '샘플 5개가 캡처되면 자동으로 저장됩니다. (5개 미만은 저장되지 않습니다.)',
         a_btn_sample_capture: '샘플 캡처',
@@ -3374,7 +3087,7 @@
         a_msg_query_email_sent: '조회 결과 이메일 전송 완료',
         a_msg_query_email_failed: '조회 결과 이메일 전송 실패',
         a_msg_need_pay_dates: '시작일/종료일을 입력하세요.',
-        a_msg_csv_download_started: 'ADP 다운로드를 시작합니다.',
+        a_msg_csv_download_started: 'OnPay 다운로드를 시작합니다.',
         a_msg_need_dates_email: '날짜와 이메일을 입력하세요.',
         a_msg_auto_status_failed: '자동 전송 상태 조회 실패',
         a_msg_auto_need_email: '자동 전송 이메일을 입력하세요.',
@@ -3382,16 +3095,20 @@
         a_msg_auto_saved: '자동 전송 설정 저장 완료',
         a_msg_system_backup_loading: '백업 목록을 불러오는 중...',
         a_msg_system_backup_running: '전체데이터 백업 생성 중...',
-        a_msg_system_backup_software_running: 'SW 포함 통합백업 생성 중...',
+        a_msg_system_backup_image_running: 'Image 전체 백업 생성 중...',
         a_msg_system_backup_uploading: '백업 파일 업로드 중...',
         a_msg_system_backup_restoring: '전체데이터 복구 실행 중...',
+        a_msg_system_backup_deleting: 'Image 백업 삭제 중...',
         a_msg_system_backup_file_required: '업로드할 백업 zip 파일을 선택하세요.',
         a_msg_system_backup_password_required: '시스템백업 비밀번호를 입력하세요.',
         a_msg_system_backup_done: '전체데이터 백업이 완료되었습니다.',
-        a_msg_system_backup_software_done: 'SW 포함 통합백업이 완료되었습니다.',
+        a_msg_system_backup_image_done: 'Image 전체 백업이 완료되었습니다.',
         a_msg_system_backup_upload_done: '백업 파일 업로드가 완료되었습니다.',
         a_msg_system_backup_restore_done: '전체데이터 복구가 완료되었습니다. 앱이 재시작될 수 있습니다.',
-        a_msg_system_backup_target_only: '현재 사이트와 같은 대상 백업만 실행할 수 있습니다.',
+        a_msg_system_backup_delete_done: 'Image 백업 삭제가 완료되었습니다.',
+        a_msg_system_backup_target_only: '현재 사이트에서 실행 가능한 Image 백업만 사용할 수 있습니다.',
+        a_msg_system_backup_delete_password_required: '삭제 비밀번호를 다시 입력하세요.',
+        a_msg_system_backup_delete_image_only: 'Image 백업만 삭제할 수 있습니다.',
       },
       en: {
         a_header_brand: 'TIMECLOCK',
@@ -3411,6 +3128,7 @@
         a_kpi_events_today: "Today's Events",
         a_employee_register: 'Employee Registration',
         a_employee_manage: 'Employee Manage',
+        a_employee_manage_terminated: 'Terminated Employee Manage',
         a_employee_edit_title: 'Edit Employee',
         a_employee_excel_update: 'Employee Excel Update',
 	        a_employee_register_hint: 'Employee code is auto-assigned. Entry order: Name(15) / Start Time / Hire / Group(5) / Title(5)',
@@ -3430,13 +3148,13 @@
         a_btn_modify: 'Edit',
         a_payroll_csv: 'Payroll CSV',
         a_payroll_hint:
-          'ADP Download sends CSV (ADP format). ADP+CSV Email and Auto Email both attach ADP CSV and Excel XLSX files.',
+          'OnPay Download sends CSV (OnPay format). OnPay+CSV Email and Auto Email both attach OnPay CSV and Excel XLSX files.',
         a_payroll_start: 'Start',
         a_payroll_end: 'End',
         a_ph_payroll_email_to: 'Recipient email',
-        a_btn_csv_download: 'ADP Download',
-        a_btn_csv_email: 'Email ADP+CSV',
-        a_auto_email_title: 'Auto Email (1-week/2-week) ADP Upload File',
+        a_btn_csv_download: 'OnPay Download',
+        a_btn_csv_email: 'Email OnPay+CSV',
+        a_auto_email_title: 'Auto Email (1-week/2-week) OnPay Upload File',
         a_auto_email_enable: 'Enable auto send',
         a_ph_auto_email: 'Auto-send email',
         a_auto_email_cycle: 'Cadence',
@@ -3502,17 +3220,15 @@
         a_bulk_help: 'Download the Excel, edit it, then upload to apply changes in bulk. (by employee_code)',
         a_btn_excel_download: 'Download Excel',
         a_btn_excel_upload: 'Upload & Apply',
-        a_system_backup_help: 'Manage full data backups and software-inclusive image backups. Password is required for this sensitive action.',
+        a_system_backup_help: 'Manage full data backup creation, backup listing, and restore. Password is required for this sensitive action.',
         a_system_backup_list_help: 'Choose a backup from the list and press restore when needed.',
         a_btn_system_backup_run: 'Run Full Backup',
-        a_btn_system_backup_software_t: 'SW Inclusive Backup (t)',
-        a_btn_system_backup_software_time: 'SW Inclusive Backup (time)',
-        a_btn_system_backup_software_cloudfront: 'SW Inclusive Backup (cloudfront)',
+        a_btn_system_backup_image_full: 'Run Full Image Backup',
         a_btn_system_backup_upload: 'Upload Backup',
         a_btn_system_backup_restore: 'Restore Backup',
+        a_btn_system_backup_delete: 'Delete',
         a_system_backup_empty: 'No backups found.',
         a_backup_kind: 'Type',
-        a_backup_target: 'Target',
         a_backup_year: 'Year',
         a_backup_period: 'Period',
         a_backup_created: 'Created',
@@ -3575,7 +3291,7 @@
         a_msg_query_email_sent: 'Query result email sent.',
         a_msg_query_email_failed: 'Failed to send query result email.',
         a_msg_need_pay_dates: 'Please enter start/end dates.',
-        a_msg_csv_download_started: 'Starting ADP download...',
+        a_msg_csv_download_started: 'Starting OnPay download...',
         a_msg_need_dates_email: 'Please enter dates and email.',
         a_msg_auto_status_failed: 'Failed to load auto-send status',
         a_msg_auto_need_email: 'Please enter an auto-send email.',
@@ -3583,16 +3299,20 @@
         a_msg_auto_saved: 'Auto-send settings saved',
         a_msg_system_backup_loading: 'Loading backups...',
         a_msg_system_backup_running: 'Creating full backup...',
-        a_msg_system_backup_software_running: 'Creating software-inclusive backup...',
+        a_msg_system_backup_image_running: 'Creating full Image backup...',
         a_msg_system_backup_uploading: 'Uploading backup file...',
         a_msg_system_backup_restoring: 'Restoring backup...',
+        a_msg_system_backup_deleting: 'Deleting Image backup...',
         a_msg_system_backup_file_required: 'Please choose a backup zip file to upload.',
         a_msg_system_backup_password_required: 'Enter the system backup password.',
         a_msg_system_backup_done: 'Full backup completed.',
-        a_msg_system_backup_software_done: 'Software-inclusive backup completed.',
+        a_msg_system_backup_image_done: 'Full Image backup completed.',
         a_msg_system_backup_upload_done: 'Backup upload completed.',
         a_msg_system_backup_restore_done: 'Backup restore completed. The app may restart.',
-        a_msg_system_backup_target_only: 'Only the current site target backup can run here.',
+        a_msg_system_backup_delete_done: 'Image backup deleted.',
+        a_msg_system_backup_target_only: 'Only the current site image backup can run here.',
+        a_msg_system_backup_delete_password_required: 'Enter the delete password again.',
+        a_msg_system_backup_delete_image_only: 'Only image backups can be deleted here.',
       },
     };
 
@@ -3752,7 +3472,11 @@
       hiddenEl.value = String(rawValue || '');
       const picker = document.querySelector(`.fixed-start-picker[data-target-input="${targetId}"]`);
       if (picker) syncFixedStartPickerControls(hiddenEl, picker);
-      if (targetId.startsWith('emp-start-')) updateEmployeeBulkSaveBtn();
+      if (targetId.startsWith('emp-start-')) {
+        const employeeId = targetId.replace('emp-start-', '');
+        updateEmployeeBulkSaveBtn();
+        queueEmployeeAutoSave(employeeId);
+      }
     }
 
     function applyFixedStartModal() {
@@ -3775,6 +3499,7 @@
 	      try { localStorage.setItem('tlj_lang', uiLang); } catch (_) {}
 	      applyKioskI18n();
 	      applyAdminI18n();
+	      try { updateEmployeeManageTitle(); } catch (_) {}
 	      renderOfflineStatus();
 	      if (offlineAlertRemaining > 0) updateOfflineAlertCountdownText();
 	      const titleEl = document.getElementById('offline-alert-title');
@@ -3921,7 +3646,7 @@
       }
       const templateCount = Number(row.face_template_count || 0);
       const templateStatus = templateCount >= FACE_ENROLL_DONE_THRESHOLD
-        ? (adminLang() === 'ko' ? '등록완료' : 'Enrolled')
+        ? (adminLang() === 'ko' ? '얼굴등록' : 'Enrolled')
         : (adminLang() === 'ko' ? '등록필요' : 'Need enrollment');
       const activeStatus = row.termination_date
         ? (adminLang() === 'ko' ? `퇴사 ${row.termination_date}` : `Terminated ${row.termination_date}`)
@@ -3992,6 +3717,16 @@
         );
         return;
       }
+      if (isEmployeeRecognitionBlocked(targetCode)) {
+        setText(
+          'face-msg',
+          adminLang() === 'ko'
+            ? '퇴사 또는 비활성 직원은 얼굴 등록/인식을 사용할 수 없습니다.'
+            : 'Terminated or inactive employees cannot use face enrollment or recognition.',
+          true
+        );
+        return;
+      }
       renderFaceEmployeeSelect(targetCode);
       const contextLoaded = selectFaceEmployeeContext(targetCode);
       if (!contextLoaded && targetCode) {
@@ -4042,12 +3777,29 @@
       employeeCodeTouchLockBound = true;
     }
 
-    function openEmployeeModal() {
+    function getEmployeeManageTitle(count = null) {
+      const base = employeeManageMode === 'terminated'
+        ? tAdmin('a_employee_manage_terminated')
+        : tAdmin('a_employee_manage');
+      if (!Number.isFinite(count)) return base;
+      if (adminLang() === 'ko') return `${base} (총원: ${count}명)`;
+      return `${base} (Total: ${count})`;
+    }
+
+    function updateEmployeeManageTitle(count = null) {
+      const titleEl = document.getElementById('employee-manage-title');
+      if (!titleEl) return;
+      titleEl.textContent = getEmployeeManageTitle(count);
+    }
+
+    function openEmployeeModal(mode = 'active') {
       if (!adminPin) {
         setText('admin-lock-msg', tAdmin('a_msg_admin_required'), true);
         return;
       }
+      employeeManageMode = mode === 'terminated' ? 'terminated' : 'active';
       document.getElementById('employee-manage-msg').textContent = '';
+      updateEmployeeManageTitle();
       document.getElementById('employee-modal-backdrop').classList.remove('hidden');
       renderEmployeeManage();
       bindEmployeeCodeTouchLock();
@@ -4071,11 +3823,23 @@
       const done = !!current && Number(current.face_template_count || 0) >= FACE_ENROLL_DONE_THRESHOLD;
       if (done) {
         btn.classList.add('done');
-        btn.textContent = adminLang() === 'ko' ? '등록완료' : 'Enrolled';
+        btn.textContent = adminLang() === 'ko' ? '얼굴등록' : 'Enrolled';
       } else {
         btn.classList.remove('done');
         btn.textContent = tAdmin('a_btn_face_enroll');
       }
+    }
+
+    function syncEmployeeEditActiveLock() {
+      const termEl = document.getElementById('emp-edit-term');
+      const activeEl = document.getElementById('emp-edit-active');
+      if (!termEl || !activeEl) return;
+      const locked = !!String(termEl.value || '').trim();
+      if (locked) activeEl.checked = false;
+      activeEl.disabled = locked;
+      activeEl.title = locked
+        ? (adminLang() === 'ko' ? '퇴사일이 있으면 활성화할 수 없습니다.' : 'Cannot activate when termination date exists.')
+        : '';
     }
 
 
@@ -4108,6 +3872,12 @@
       if (groupEl) groupEl.value = row.work_group || 'FRONT';
       if (titleEl) titleEl.value = row.title || 'STAFF';
       if (activeEl) activeEl.checked = !!row.is_active;
+      syncEmployeeEditActiveLock();
+      if (termEl && !termEl.dataset.lockBound) {
+        termEl.addEventListener('input', syncEmployeeEditActiveLock);
+        termEl.addEventListener('change', syncEmployeeEditActiveLock);
+        termEl.dataset.lockBound = '1';
+      }
       updateEmployeeEditFaceButton(row);
 
       clearStatus('employee-edit-msg');
@@ -4130,7 +3900,7 @@
       const fixedStartTime = document.getElementById('emp-edit-start')?.value || '';
       const title = document.getElementById('emp-edit-title')?.value || 'STAFF';
       const group = document.getElementById('emp-edit-group')?.value || 'FRONT';
-      const active = !!document.getElementById('emp-edit-active')?.checked;
+      const active = termDate ? false : !!document.getElementById('emp-edit-active')?.checked;
       const hireDate = document.getElementById('emp-edit-hire')?.value || '';
       const termDate = document.getElementById('emp-edit-term')?.value || '';
 
@@ -4186,34 +3956,11 @@
       return (el?.value || '').trim();
     }
 
-    function currentSoftwareBackupTarget() {
-      const host = String(window.location.hostname || '').toLowerCase();
-      if (host === 't.6788choi.synology.me') return 't';
-      if (host === 'time.6788choi.synology.me') return 'time';
-      if (host === 'd3tht40u4ejs2q.cloudfront.net') return 'cloudfront';
-      return '';
-    }
-
-    function syncSoftwareBackupButtons() {
-      const current = currentSoftwareBackupTarget();
-      ['t', 'time', 'cloudfront'].forEach((target) => {
-        const btn = document.getElementById(`software-backup-btn-${target}`);
-        if (!btn) return;
-        btn.disabled = !current || current !== target;
-        btn.style.opacity = btn.disabled ? '0.45' : '1';
-      });
-    }
-
     function formatBackupKind(kind) {
       const value = String(kind || '').toLowerCase();
       if (value === 'annual') return tAdmin('a_backup_kind_annual');
-      if (value === 'recovery') return tAdmin('a_backup_kind_recovery');
       if (value === 'image') return tAdmin('a_backup_kind_image');
-      return kind || '-';
-    }
-
-    function formatBackupTarget(target) {
-      return target || '-';
+      return tAdmin('a_backup_kind_recovery');
     }
 
     function formatBackupPeriod(item) {
@@ -4260,13 +4007,15 @@
       tbody.innerHTML = systemBackupItems.map((item) => `
         <tr>
           <td>${formatBackupKind(item.kind)}</td>
-          <td>${formatBackupTarget(item.target)}</td>
           <td>${item.backup_year ?? '-'}</td>
           <td>${formatBackupPeriod(item)}</td>
           <td>${formatBackupCreated(item.created_at)}</td>
           <td>${formatBackupSize(item.size_bytes)}</td>
           <td><button class="sub-btn mini-btn" onclick="downloadSystemBackup('${String(item.backup_id).replace(/'/g, '&#39;')}')">${adminLang() === 'ko' ? '다운로드' : 'Download'}</button></td>
-          <td><button class="btn-orange mini-btn" onclick="restoreSystemBackup('${String(item.backup_id).replace(/'/g, '&#39;')}')" data-i18n-admin="a_btn_system_backup_restore">${tAdmin('a_btn_system_backup_restore')}</button></td>
+          <td><button class="btn-orange mini-btn" onclick="restoreSystemBackup('${String(item.backup_id).replace(/'/g, '&#39;')}')">${String(item.kind || '').toLowerCase() === 'image' ? (adminLang() === 'ko' ? '복구' : 'Restore') : tAdmin('a_btn_system_backup_restore')}</button></td>
+          <td>${String(item.kind || '').toLowerCase() === 'image'
+            ? `<button class="mini-btn" style="background:#5b6472;color:#fff;" onclick="deleteSystemBackup('${String(item.backup_id).replace(/'/g, '&#39;')}', '${String(item.kind).replace(/'/g, '&#39;')}')" data-i18n-admin="a_btn_system_backup_delete">${tAdmin('a_btn_system_backup_delete')}</button>`
+            : '-'}</td>
         </tr>
       `).join('');
     }
@@ -4322,7 +4071,6 @@
         return;
       }
       resetSystemBackupModalState();
-      syncSoftwareBackupButtons();
       clearStatus('system-backup-msg');
       document.getElementById('system-backup-modal-backdrop')?.classList.remove('hidden');
       setTimeout(() => document.getElementById('system-backup-password')?.focus(), 50);
@@ -4365,17 +4113,26 @@
       }
     }
 
-    async function runSoftwareBackup(target) {
+    function currentSoftwareBackupTarget() {
+      const host = String(window.location.host || '').toLowerCase();
+      if (host.includes('d3tht40u4ejs2q.cloudfront.net')) return 'cloudfront';
+      if (host.includes('time.6788choi.synology.me')) return 'time';
+      if (host.includes('t.6788choi.synology.me')) return 't';
+      return null;
+    }
+
+    async function runImageFullBackup() {
       const backupPassword = getSystemBackupPassword();
       if (!backupPassword) {
         setText('system-backup-msg', tAdmin('a_msg_system_backup_password_required'), true);
         return;
       }
-      if (currentSoftwareBackupTarget() !== target) {
+      const target = currentSoftwareBackupTarget();
+      if (!target) {
         setText('system-backup-msg', tAdmin('a_msg_system_backup_target_only'), true);
         return;
       }
-      setText('system-backup-msg', tAdmin('a_msg_system_backup_software_running'));
+      setText('system-backup-msg', tAdmin('a_msg_system_backup_image_running'));
       try {
         const res = await fetch('/api/admin/system-backups/software/run', {
           method: 'POST',
@@ -4388,7 +4145,7 @@
         let data = {};
         try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
         if (!res.ok) throw new Error(data.detail || text || tAdmin('a_msg_change_failed'));
-        setText('system-backup-msg', data.message || tAdmin('a_msg_system_backup_software_done'));
+        setText('system-backup-msg', data.message || tAdmin('a_msg_system_backup_image_done'));
         await loadSystemBackups();
       } catch (err) {
         setText('system-backup-msg', err.message, true);
@@ -4451,6 +4208,38 @@
         try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
         if (!res.ok) throw new Error(data.detail || text || tAdmin('a_msg_change_failed'));
         setText('system-backup-msg', data.message || tAdmin('a_msg_system_backup_restore_done'));
+        await loadSystemBackups();
+      } catch (err) {
+        setText('system-backup-msg', err.message, true);
+      }
+    }
+
+    async function deleteSystemBackup(backupId, kind) {
+      if (String(kind || '').toLowerCase() !== 'image') {
+        setText('system-backup-msg', tAdmin('a_msg_system_backup_delete_image_only'), true);
+        return;
+      }
+      const deletePassword = window.prompt(tAdmin('a_msg_system_backup_delete_password_required'), '');
+      if (!deletePassword) {
+        setText('system-backup-msg', tAdmin('a_msg_system_backup_delete_password_required'), true);
+        return;
+      }
+      const confirmed = window.confirm(`${tAdmin('a_btn_system_backup_delete')}?\n${backupId}`);
+      if (!confirmed) return;
+      setText('system-backup-msg', tAdmin('a_msg_system_backup_deleting'));
+      try {
+        const res = await fetch('/api/admin/system-backups/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ admin_pin: adminPin, backup_id: backupId, backup_password: deletePassword }),
+        });
+        const text = await res.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
+        if (!res.ok) throw new Error(data.detail || text || tAdmin('a_msg_change_failed'));
+        setText('system-backup-msg', data.message || tAdmin('a_msg_system_backup_delete_done'));
         await loadSystemBackups();
       } catch (err) {
         setText('system-backup-msg', err.message, true);
@@ -4982,6 +4771,12 @@
 
 	    function applyIdentifyResult(data, source = 'online') {
 	      if (data && data.matched) {
+        if (isEmployeeRecognitionBlocked(data.employee_code, data)) {
+          recognized = null;
+          document.getElementById('scan-status').textContent = t('k_inactive_face_block');
+          renderRecognized();
+          return;
+        }
 	        recognized = {
 	          employee_code: data.employee_code,
 	          employee_name: data.employee_name,
@@ -5250,6 +5045,13 @@
 	    async function submitEvent(eventType) {
       if (!recognized) {
         setText('event-toast', t('k_need_face'), true);
+        return;
+      }
+      if (isEmployeeRecognitionBlocked(recognized.employee_code, recognized)) {
+        recognized = null;
+        idleWaiting = true;
+        renderRecognized();
+        setText('event-toast', t('k_inactive_face_block'), true);
         return;
       }
 	      const refTs = Math.max(Number(lastFaceSeenAt) || 0, Number(recognizedAt) || 0);
@@ -5690,10 +5492,23 @@
 
     let activeTerminationDateEmployeeId = '';
 
+    function resetTerminationDateModalInput(rawValue = '') {
+      const current = document.getElementById('term-date-modal-input');
+      if (!current || !current.parentNode) return null;
+      const next = current.cloneNode(false);
+      next.value = String(rawValue || '');
+      current.parentNode.replaceChild(next, current);
+      return next;
+    }
+
     function closeTerminationDateModal() {
       const backdrop = document.getElementById('term-date-modal-backdrop');
       if (backdrop) backdrop.classList.add('hidden');
       activeTerminationDateEmployeeId = '';
+      const inputEl = document.getElementById('term-date-modal-input');
+      if (inputEl) {
+        try { inputEl.blur(); } catch (_) {}
+      }
       const msgEl = document.getElementById('term-date-modal-msg');
       if (msgEl) msgEl.textContent = '';
     }
@@ -5701,16 +5516,16 @@
     function openTerminationDateModal(employeeId) {
       const id = String(employeeId || '');
       const dateEl = document.getElementById(`emp-term-${id}`);
-      const modalInput = document.getElementById('term-date-modal-input');
       const backdrop = document.getElementById('term-date-modal-backdrop');
-      if (!dateEl || !modalInput || !backdrop) return;
+      if (!dateEl || !backdrop) return;
       activeTerminationDateEmployeeId = id;
-      modalInput.value = dateEl.value || '';
+      const modalInput = resetTerminationDateModalInput(dateEl.value || '');
+      if (!modalInput) return;
       const msgEl = document.getElementById('term-date-modal-msg');
       if (msgEl) msgEl.textContent = '';
       backdrop.classList.remove('hidden');
       setTimeout(() => {
-        try { modalInput.focus({ preventScroll: true }); } catch (_) { modalInput.focus(); }
+        try { modalInput.focus({ preventScroll: true }); } catch (_) { try { modalInput.focus(); } catch (_) {} }
       }, 20);
     }
 
@@ -5723,18 +5538,67 @@
       syncManageDateDisplay(id, 'term');
     }
 
+    function buildTerminationDateModalDraft(employeeId, rawValue) {
+      const id = String(employeeId || '');
+      const base = adminEmployees.find((row) => String(row.id || '') === id);
+      if (!base) return null;
+      const nameEl = document.getElementById(`emp-name-${id}`);
+      const startEl = document.getElementById(`emp-start-${id}`);
+      const hireEl = document.getElementById(`emp-hire-${id}`);
+      const groupEl = document.getElementById(`emp-group-${id}`);
+      const titleEl = document.getElementById(`emp-title-${id}`);
+      const termDateRaw = String(rawValue || '').trim();
+      return {
+        id,
+        name: String(nameEl?.value || base.name || '').trim().slice(0, 15),
+        fixed_start_time: String(startEl?.value || base.fixed_start_time || '') || null,
+        hire_date: String(hireEl?.value || base.hire_date || ''),
+        termination_date: termDateRaw || null,
+        title: String(titleEl?.value || base.title || 'STAFF').toUpperCase(),
+        work_group: String(groupEl?.value || base.work_group || 'FRONT').toUpperCase(),
+        is_active: termDateRaw ? false : !!base.is_active,
+      };
+    }
+
     async function persistTerminationDateModalValue(rawValue) {
       const id = String(activeTerminationDateEmployeeId || '');
       if (!id) return;
       const msgEl = document.getElementById('term-date-modal-msg');
       if (msgEl) msgEl.textContent = adminLang() === 'ko' ? '저장 중...' : 'Saving...';
       applyTerminationDateModalValue(rawValue || '');
-      const ok = await saveEmployee(id, { silent: true });
-      if (ok) {
-        closeTerminationDateModal();
+      const draft = buildTerminationDateModalDraft(id, rawValue || '');
+      if (!draft) {
+        if (msgEl) msgEl.textContent = 'row not found';
         return;
       }
-      if (msgEl) msgEl.textContent = adminLang() === 'ko' ? '저장 실패' : 'Save failed';
+      lastEmployeeSaveError = '';
+      try {
+        const res = await fetch(`/api/admin/employees/${encodeURIComponent(id)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            admin_pin: adminPin,
+            name: draft.name,
+            fixed_start_time: draft.fixed_start_time,
+            hire_date: draft.hire_date,
+            termination_date: draft.termination_date,
+            title: draft.title,
+            work_group: draft.work_group,
+            is_active: draft.is_active,
+          }),
+        });
+        const text = await res.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
+        if (!res.ok) throw new Error(data.detail || text || tAdmin('a_msg_employee_update_failed'));
+        commitEmployeeDraft(id, draft);
+        renderEmployeeManage();
+        closeTerminationDateModal();
+        return;
+      } catch (err) {
+        lastEmployeeSaveError = err && err.message ? err.message : (tAdmin('a_msg_employee_update_failed') || 'Save failed');
+      }
+      if (msgEl) msgEl.textContent = lastEmployeeSaveError || (adminLang() === 'ko' ? '저장 실패' : 'Save failed');
     }
 
     async function applyTerminationDateModal() {
@@ -5756,6 +5620,16 @@
       return false;
     }
 
+    function handleTerminationDateInputTap(event, employeeId) {
+      if (!isIOSPadUI()) return true;
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      openTerminationDateModal(employeeId);
+      return false;
+    }
+
     function handleTerminationDateContext(event, employeeId) {
       if (event) {
         event.preventDefault();
@@ -5763,6 +5637,24 @@
       }
       openTerminationDateModal(employeeId);
       return false;
+    }
+
+    function clearEmployeeTerminationDate(employeeId) {
+      const id = String(employeeId || '');
+      const termEl = document.getElementById(`emp-term-${id}`);
+      if (!termEl) return false;
+      termEl.value = '';
+      syncManageDateDisplay(id, 'term');
+      updateEmployeeBulkSaveBtn();
+      queueEmployeeAutoSave(id);
+      return false;
+    }
+
+    function handleEmployeeTerminationDateChange(employeeId) {
+      const id = String(employeeId || '');
+      syncManageDateDisplay(id, 'term');
+      updateEmployeeBulkSaveBtn();
+      return true;
     }
 
     function openManageDatePicker(employeeId, field) {
@@ -5796,9 +5688,11 @@
       const termDateRaw = String(termEl.value || '');
       const title = String(titleEl.value || 'STAFF').toUpperCase();
       const workGroup = String(groupEl.value || 'FRONT').toUpperCase();
-      const isActive = !!activeEl.checked;
+      const hasTerminationDate = !!termDateRaw;
+      const isActive = hasTerminationDate ? false : !!activeEl.checked;
 
       nameEl.value = name;
+      if (hasTerminationDate) activeEl.checked = false;
 
       return {
         id,
@@ -5848,21 +5742,61 @@
       btn.style.opacity = count === 0 ? '0.6' : '1';
     }
 
+    function commitEmployeeDraft(employeeId, draft) {
+      const id = String(employeeId || '');
+      const row = adminEmployees.find((item) => String(item.id || '') === id);
+      if (!row || !draft) return;
+      row.name = draft.name;
+      row.fixed_start_time = draft.fixed_start_time || null;
+      row.hire_date = draft.hire_date;
+      row.termination_date = draft.termination_date;
+      row.title = draft.title;
+      row.work_group = draft.work_group;
+      row.is_active = draft.is_active;
+    }
+
+    const employeeAutoSaveTimers = new Map();
+    const employeeAutoSaveInFlight = new Set();
+
+    function queueEmployeeAutoSave(employeeId, options = {}) {
+      const id = String(employeeId || '');
+      if (!id) return;
+      const delay = Number(options.delay ?? 0);
+      const timer = employeeAutoSaveTimers.get(id);
+      if (timer) clearTimeout(timer);
+      employeeAutoSaveTimers.set(id, setTimeout(async () => {
+        employeeAutoSaveTimers.delete(id);
+        if (employeeAutoSaveInFlight.has(id)) return;
+        if (!isEmployeeRowDirty(id)) {
+          updateEmployeeBulkSaveBtn();
+          return;
+        }
+        employeeAutoSaveInFlight.add(id);
+        setText('employee-manage-msg', adminLang() === 'ko' ? '자동 저장 중...' : 'Auto-saving...');
+        const ok = await saveEmployee(id, { skipReload: true, silent: true });
+        if (ok) setText('employee-manage-msg', adminLang() === 'ko' ? '자동 저장됨' : 'Auto-saved');
+        else setText('employee-manage-msg', adminLang() === 'ko' ? '자동 저장 실패' : 'Auto-save failed', true);
+        employeeAutoSaveInFlight.delete(id);
+        updateEmployeeBulkSaveBtn();
+      }, Math.max(0, delay)));
+    }
+
     function renderEmployeeManage() {
       const q = (document.getElementById('emp-search')?.value || '').trim().toLowerCase();
+      const rowsByMode = adminEmployees.filter((r) =>
+        employeeManageMode === 'terminated' ? !!r.termination_date : !r.termination_date
+      );
+      updateEmployeeManageTitle(rowsByMode.length);
       const filtered = q
-        ? adminEmployees.filter((r) => {
+        ? rowsByMode.filter((r) => {
             const code = String(r.employee_code || '').toLowerCase();
             const name = String(r.name || '').toLowerCase();
             const term = String(r.termination_date || '').toLowerCase();
-            if (q === '퇴사' || q === 'terminated') return !!r.termination_date;
             return code.includes(q) || name.includes(q) || term.includes(q);
           })
-        : adminEmployees;
+        : rowsByMode;
 
       const sorted = filtered.slice().sort(compareEmployeeRows);
-      const countEl = document.getElementById('employee-manage-count');
-      if (countEl) countEl.textContent = String(sorted.length);
 
       const manageScrollEl = document.querySelector('#employee-modal-backdrop .employee-manage-scroll');
       const prevScrollLeft = manageScrollEl ? manageScrollEl.scrollLeft : 0;
@@ -5870,13 +5804,6 @@
 
       const tbody = document.getElementById('employees-manage-body');
       tbody.innerHTML = '';
-
-      if (!sorted.length) {
-        tbody.innerHTML = `<tr><td colspan="10" class="employee-manage-empty">${adminLang() === 'ko' ? '검색 결과가 없습니다.' : 'No employees found.'}</td></tr>`;
-        updateEmployeeSortHeaders();
-        updateEmployeeBulkSaveBtn();
-        return;
-      }
 
       const titleOptions = (selected) => {
         const opts = ['STAFF', 'AM', 'GM', 'OTHER'];
@@ -5890,11 +5817,42 @@
         return opts.map((v) => `<option value="${v}" ${String(selected) === v ? 'selected' : ''}>${labels[v] || v}</option>`).join('');
       };
 
+      const renderTerminationCell = (row) => {
+        if (isIOSPadUI()) {
+          const clearButton = employeeManageMode === 'terminated'
+            ? `<button type="button" id="emp-term-clear-${row.id}" class="sub-btn mini-btn term-clear-btn" onclick="return clearEmployeeTerminationDate('${row.id}')" ${row.termination_date ? '' : 'disabled'}>삭제</button>`
+            : '';
+          return `<td><div class="manage-term-inline"><div class="manage-date-wrap term-date-wrap"><input class="mini-input manage-date-input manage-employee-date-input" id="emp-term-${row.id}" type="date" value="${row.termination_date || ''}" onchange="return handleEmployeeTerminationDateChange('${row.id}')" /><span class="manage-date-label" id="emp-term-label-${row.id}">${formatManageDateShort(row.termination_date)}</span></div>${clearButton}</div></td>`;
+        }
+        return `<td><div class="manage-date-wrap term-date-wrap"><input class="mini-input manage-date-input manage-employee-date-input" id="emp-term-${row.id}" type="date" value="${row.termination_date || ''}" ondblclick="openManageDatePicker('${row.id}', 'term')" onchange="syncManageDateDisplay('${row.id}', 'term')" /><span class="manage-date-label" id="emp-term-label-${row.id}" onclick="return handleTerminationDateTap(event, '${row.id}')" oncontextmenu="return handleTerminationDateContext(event, '${row.id}')">${formatManageDateShort(row.termination_date)}</span></div></td>`;
+      };
+
       for (const row of sorted) {
+        const faceBlocked = isEmployeeRecognitionBlocked(row.employee_code, row);
         const faceDone = Number(row.face_template_count || 0) >= FACE_ENROLL_DONE_THRESHOLD;
-        const faceLabel = faceDone
-          ? (adminLang() === 'ko' ? '등록완료' : 'Enrolled')
+        let faceLabel = faceBlocked
+          ? (adminLang() === 'ko' ? '얼굴등록' : 'Blocked')
+          : faceDone
+          ? (adminLang() === 'ko' ? '얼굴등록' : 'Enrolled')
           : tAdmin('a_btn_face_enroll');
+        let faceClassSuffix = faceDone ? ' done' : '';
+        if (isIOSPadUI()) {
+          const faceTerminated = !!row.termination_date;
+          const faceInactive = !faceTerminated && !row.is_active;
+          if (faceTerminated) {
+            faceLabel = adminLang() === 'ko' ? '퇴사' : 'Terminated';
+            faceClassSuffix = ' state-terminated';
+          } else if (faceInactive) {
+            faceLabel = adminLang() === 'ko' ? '비활성' : 'Inactive';
+            faceClassSuffix = ' state-inactive';
+          } else if (faceDone) {
+            faceLabel = adminLang() === 'ko' ? '등록완료' : 'Enrolled';
+            faceClassSuffix = ' done';
+          } else {
+            faceLabel = adminLang() === 'ko' ? '등록필요' : 'Required';
+            faceClassSuffix = ' state-required';
+          }
+        }
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="emp-left code-col"><button type="button" class="code-link" onclick="openEmployeeEditModal('${row.id}')">${row.employee_code}</button></td>
@@ -5906,20 +5864,33 @@
             </div>
           </td>
           <td><div class="manage-date-wrap"><input class="mini-input manage-date-input manage-employee-date-input" id="emp-hire-${row.id}" type="date" value="${row.hire_date || ''}" ondblclick="openManageDatePicker('${row.id}', 'hire')" onchange="syncManageDateDisplay('${row.id}', 'hire')" /><span class="manage-date-label" id="emp-hire-label-${row.id}">${formatManageDateShort(row.hire_date)}</span></div></td>
-          <td><div class="manage-date-wrap term-date-wrap"><input class="mini-input manage-date-input manage-employee-date-input" id="emp-term-${row.id}" type="date" value="${row.termination_date || ''}" ondblclick="openManageDatePicker('${row.id}', 'term')" onchange="syncManageDateDisplay('${row.id}', 'term')" /><span class="manage-date-label" id="emp-term-label-${row.id}" onclick="return handleTerminationDateTap(event, '${row.id}')" oncontextmenu="return handleTerminationDateContext(event, '${row.id}')">${formatManageDateShort(row.termination_date)}</span></div></td>
+          ${renderTerminationCell(row)}
           <td><select class="mini-select manage-employee-select" id="emp-group-${row.id}">${groupOptions(row.work_group || 'FRONT')}</select></td>
           <td><select class="mini-select manage-employee-select" id="emp-title-${row.id}">${titleOptions(row.title || 'STAFF')}</select></td>
-          <td style="text-align:center;"><input type="checkbox" id="emp-active-${row.id}" ${row.is_active ? 'checked' : ''} /></td>
-          <td class="emp-sticky face-col"><button class="mini-btn face-enroll-btn${faceDone ? ' done' : ''}" onclick="openFaceModalFromManageRow('${row.employee_code}')">${faceLabel}</button></td>
-          <td class="emp-sticky save-col"><button class="admin-btn mini-btn manage-save-btn" onclick="saveEmployee('${row.id}')">${tAdmin('a_btn_save')}</button></td>
+          <td style="text-align:center;"><input type="checkbox" id="emp-active-${row.id}" ${row.is_active ? 'checked' : ''} ${row.termination_date ? 'disabled' : ''} /></td>
+          <td class="emp-sticky face-col"><button class="mini-btn face-enroll-btn${faceClassSuffix}" onclick="openFaceModalFromManageRow('${row.employee_code}')" ${faceBlocked ? 'disabled' : ''}>${faceLabel}</button></td>
         `;
         tbody.appendChild(tr);
       }
 
       for (const el of tbody.querySelectorAll('input[id^="emp-"], select[id^="emp-"]')) {
-        const eventType = (el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'date') ? 'change' : 'input';
-        el.addEventListener(eventType, updateEmployeeBulkSaveBtn);
-        if (eventType !== 'input') el.addEventListener('input', updateEmployeeBulkSaveBtn);
+        const id = String(el.id || '').replace(/^emp-(?:name|start|hire|term|group|title|active)-/, '');
+        if (!id) continue;
+        el.addEventListener('input', updateEmployeeBulkSaveBtn);
+        el.addEventListener('change', updateEmployeeBulkSaveBtn);
+        if (el.id.startsWith('emp-name-')) {
+          el.addEventListener('blur', () => queueEmployeeAutoSave(id, { delay: 120 }));
+        } else if (isIOSPadUI() && el.id.startsWith('emp-term-')) {
+          el.addEventListener('blur', () => queueEmployeeAutoSave(id, { delay: 120 }));
+        } else if (
+          el.id.startsWith('emp-group-') ||
+          el.id.startsWith('emp-title-') ||
+          el.id.startsWith('emp-active-') ||
+          el.id.startsWith('emp-hire-') ||
+          (!isIOSPadUI() && el.id.startsWith('emp-term-'))
+        ) {
+          el.addEventListener('change', () => queueEmployeeAutoSave(id));
+        }
       }
 
       initFixedStartPickers(tbody);
@@ -5938,23 +5909,30 @@
     async function saveEmployee(employeeId, options = {}) {
       const skipReload = !!options.skipReload;
       const silent = !!options.silent;
+      lastEmployeeSaveError = '';
       if (!adminPin) {
+        lastEmployeeSaveError = tAdmin('a_msg_admin_required');
         if (!silent) setText('employee-manage-msg', tAdmin('a_msg_admin_required'), true);
         return false;
       }
 
       const draft = getEmployeeRowDraft(employeeId);
       if (!draft) {
+        lastEmployeeSaveError = 'row not found';
         if (!silent) setText('employee-manage-msg', 'row not found', true);
         return false;
       }
 
       if (!draft.name || !draft.hire_date) {
+        lastEmployeeSaveError = tAdmin('a_msg_name_hire_required');
         if (!silent) setText('employee-manage-msg', tAdmin('a_msg_name_hire_required'), true);
         return false;
       }
 
       try {
+        const baseRow = adminEmployees.find((row) => String(row.id || '') === String(employeeId)) || null;
+        const wasTerminated = !!String(baseRow?.termination_date || '').trim();
+        const nowTerminated = !!String(draft.termination_date || '').trim();
         const res = await fetch(`/api/admin/employees/${encodeURIComponent(employeeId)}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -5978,10 +5956,16 @@
           setText('employee-manage-msg', tAdmin('a_msg_saved'));
           await loadAdminEmployees();
         } else {
+          commitEmployeeDraft(employeeId, draft);
+          if (isIOSPadUI() && !wasTerminated && nowTerminated) {
+            employeeManageMode = 'terminated';
+          }
+          renderEmployeeManage();
           updateEmployeeBulkSaveBtn();
         }
         return true;
       } catch (err) {
+        lastEmployeeSaveError = err && err.message ? err.message : (tAdmin('a_msg_employee_update_failed') || 'Save failed');
         if (!silent) setText('employee-manage-msg', err.message, true);
         return false;
       }
@@ -6202,14 +6186,10 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || tAdmin('a_msg_overview_failed'));
 
-        const kpiActiveEl = document.getElementById('kpi-active');
-        if (kpiActiveEl) kpiActiveEl.textContent = data.active_employees;
-        const kpiFaceEl = document.getElementById('kpi-face');
-        if (kpiFaceEl) kpiFaceEl.textContent = data.registered_face_employees;
-        const kpiTemplateEl = document.getElementById('kpi-template');
-        if (kpiTemplateEl) kpiTemplateEl.textContent = data.total_face_templates;
-        const kpiEventsEl = document.getElementById('kpi-events');
-        if (kpiEventsEl) kpiEventsEl.textContent = data.today_events;
+        document.getElementById('kpi-active').textContent = data.active_employees;
+        document.getElementById('kpi-face').textContent = data.registered_face_employees;
+        document.getElementById('kpi-template').textContent = data.total_face_templates;
+        document.getElementById('kpi-events').textContent = data.today_events;
         const kpiActiveInlineEl = document.getElementById('kpi-active-inline');
         if (kpiActiveInlineEl) kpiActiveInlineEl.textContent = data.active_employees;
         const kpiFaceInlineEl = document.getElementById('kpi-face-inline');

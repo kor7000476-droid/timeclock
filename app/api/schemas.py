@@ -277,6 +277,17 @@ class AdminSystemBackupRestoreResponse(BaseModel):
     restored: AdminSystemBackupItem
 
 
+class AdminSystemBackupDeleteRequest(BaseModel):
+    admin_pin: str
+    backup_password: str
+    backup_id: str
+
+
+class AdminSystemBackupDeleteResponse(BaseModel):
+    ok: bool
+    deleted: AdminSystemBackupItem
+
+
 class AdminSystemBackupUploadResponse(BaseModel):
     ok: bool
     uploaded: AdminSystemBackupItem

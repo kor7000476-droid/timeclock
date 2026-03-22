@@ -265,6 +265,86 @@ def _write_software_zip(zip_path: Path, *, manifest: dict[str, Any], entries: li
     tmp_zip.replace(zip_path)
 
 
+def _software_excluded_names() -> set[str]:
+    return {
+        ".git",
+        ".venv",
+        ".upload",
+        "data",
+        "__pycache__",
+    }
+
+
+def _software_excluded_suffixes() -> tuple[str, ...]:
+    return (
+        ".pyc",
+        ".pyo",
+        ".sqlite",
+        ".sqlite3",
+        ".db",
+        ".log",
+        ".tmp",
+        ".bak",
+        ".zip",
+        ".gz",
+        ".tar",
+    )
+
+
+def _should_exclude_software_path(path: Path, *, root: Path) -> bool:
+    try:
+        rel_parts = path.relative_to(root).parts
+    except Exception:
+        return True
+    if not rel_parts:
+        return True
+    if any(part in _software_excluded_names() for part in rel_parts):
+        return True
+    rel_posix = "/".join(rel_parts)
+    if rel_posix.startswith("system_backups/"):
+        return True
+    if rel_posix.startswith("backups/"):
+        return True
+    if rel_posix.startswith(".git/"):
+        return True
+    if rel_posix.startswith(".venv/"):
+        return True
+    if rel_posix.startswith(".upload/"):
+        return True
+    if rel_posix.startswith("data/"):
+        return True
+    lower_name = path.name.lower()
+    if ".rollback" in lower_name or ".backup" in lower_name or ".bak_" in lower_name or lower_name.endswith(".orig"):
+        return True
+    if path.is_file() and path.suffix.lower() in _software_excluded_suffixes():
+        return True
+    return False
+
+
+def _software_managed_files(*, root: Path) -> list[Path]:
+    files: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in sorted(root.rglob("*")):
+        if not candidate.is_file():
+            continue
+        if _should_exclude_software_path(candidate, root=root):
+            continue
+        files.append(candidate)
+        seen.add(candidate.resolve())
+    for hidden_name in (".env", ".dockerignore", ".gitignore"):
+        hidden_path = (root / hidden_name).resolve()
+        if not hidden_path.exists() or not hidden_path.is_file():
+            continue
+        if hidden_path in seen:
+            continue
+        if _should_exclude_software_path(hidden_path, root=root):
+            continue
+        files.append(hidden_path)
+        seen.add(hidden_path)
+    files.sort()
+    return files
+
+
 def _has_time_data_within(snapshot_db: Path, *, covered_start: date, covered_end: date) -> bool:
     utc_start, utc_end = eastern_date_range_to_utc_naive(covered_start, covered_end)
     with sqlite3.connect(snapshot_db) as conn:
@@ -356,7 +436,7 @@ def _replace_recovery_archive(item: BackupItem) -> None:
             existing.unlink(missing_ok=True)
 
 
-def _prune_software_archives(*, target: str, max_keep: int = 3) -> None:
+def _prune_software_archives(*, target: str, max_keep: int = 2) -> None:
     folder = software_backup_dir(target)
     folder.mkdir(parents=True, exist_ok=True)
     items = sorted(
@@ -459,38 +539,14 @@ def create_backup_set(*, now_et: Optional[datetime] = None, annual_years: Option
 def _software_backup_entries() -> list[tuple[Path, str]]:
     root = _project_root()
     entries: list[tuple[Path, str]] = []
-    include_paths = [
-        root / "app" / "api",
-        root / "app" / "core",
-        root / "app" / "db",
-        root / "app" / "services",
-        root / "app" / "templates",
-        root / "app" / "static",
-        root / "bin",
-        root / "requirements.txt",
-        root / "Dockerfile",
-        root / "docker-compose.yml",
-        root / ".env",
-    ]
     seen: set[str] = set()
-    for include_path in include_paths:
-        if not include_path.exists():
+    for src in _software_managed_files(root=root):
+        rel = src.relative_to(root).as_posix()
+        arcname = f"payload/{rel}"
+        if arcname in seen:
             continue
-        if include_path.is_dir():
-            for src in sorted(p for p in include_path.rglob("*") if p.is_file()):
-                rel = src.relative_to(root).as_posix()
-                arcname = f"payload/{rel}"
-                if arcname in seen:
-                    continue
-                seen.add(arcname)
-                entries.append((src, arcname))
-        else:
-            rel = include_path.relative_to(root).as_posix()
-            arcname = f"payload/{rel}"
-            if arcname in seen:
-                continue
-            seen.add(arcname)
-            entries.append((include_path, arcname))
+        seen.add(arcname)
+        entries.append((src, arcname))
     return entries
 
 
@@ -530,7 +586,20 @@ def restore_backup(backup_id: str) -> BackupItem:
     if kind == "IMAGE":
         root = _project_root()
         with _restore_guard():
+            archived_files: set[str] = set()
             with ZipFile(zip_path, "r") as zf:
+                for member in zf.infolist():
+                    name = member.filename
+                    if not name.startswith("payload/") or name.endswith("/"):
+                        continue
+                    archived_files.add(name.removeprefix("payload/"))
+                current_files = {
+                    candidate.relative_to(root).as_posix(): candidate
+                    for candidate in _software_managed_files(root=root)
+                }
+                for rel_name, candidate in current_files.items():
+                    if rel_name not in archived_files:
+                        candidate.unlink(missing_ok=True)
                 for member in zf.infolist():
                     name = member.filename
                     if not name.startswith("payload/") or name.endswith("/"):
@@ -575,6 +644,13 @@ def restore_backup(backup_id: str) -> BackupItem:
             _sqlite_backup(extracted_db, live_db)
         engine.dispose()
     return _build_backup_item(zip_path)
+
+
+def delete_backup(backup_id: str) -> BackupItem:
+    zip_path = _resolve_backup_path(backup_id)
+    item = _build_backup_item(zip_path)
+    zip_path.unlink(missing_ok=True)
+    return item
 
 
 def import_backup_archive(src_zip: Path) -> BackupItem:

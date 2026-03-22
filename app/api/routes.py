@@ -37,6 +37,8 @@ from app.api.schemas import (
     AdminRecentEvent,
     AdminResetRequest,
     AdminResetResponse,
+    AdminSystemBackupDeleteRequest,
+    AdminSystemBackupDeleteResponse,
     AdminSystemBackupItem,
     AdminSystemBackupListResponse,
     AdminSystemBackupRestoreRequest,
@@ -74,7 +76,7 @@ from app.services.mailer import MailerError, send_email_with_attachments
 from app.services.admin_auth import change_admin_pin as _change_admin_pin
 from app.services.admin_auth import verify_admin_pin as _verify_admin_pin
 from app.services.state_machine import StateError, allowed_events_for_status, apply_event, infer_state
-from app.services.system_backup import BackupItem, create_backup_set, create_software_backup, import_backup_archive, list_backups, restore_backup, restore_in_progress
+from app.services.system_backup import BackupItem, create_backup_set, create_software_backup, delete_backup, import_backup_archive, list_backups, restore_backup, restore_in_progress
 
 router = APIRouter(prefix="/api")
 
@@ -438,6 +440,38 @@ def admin_restore_system_backup(
     )
     db.commit()
     return AdminSystemBackupRestoreResponse(ok=True, restored=_serialize_backup_item(restored))
+
+
+@router.post("/admin/system-backups/delete", response_model=AdminSystemBackupDeleteResponse)
+def admin_delete_system_backup(
+    payload: AdminSystemBackupDeleteRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> AdminSystemBackupDeleteResponse:
+    require_admin(db, payload.admin_pin)
+    _require_system_backup_password(payload.backup_password)
+    item = next((candidate for candidate in list_backups() if candidate.backup_id == payload.backup_id), None)
+    if item is None:
+        raise HTTPException(status_code=404, detail="backup not found")
+    if (item.kind or "").strip().upper() != "IMAGE":
+        raise HTTPException(status_code=400, detail="only image backups can be deleted here")
+    current_target = _detect_software_backup_target(request.headers.get("host", ""))
+    if current_target is None or item.target != current_target:
+        raise HTTPException(status_code=400, detail="image backup delete is allowed only for current host target")
+    deleted = delete_backup(payload.backup_id)
+    db.add(
+        AuditLog(
+            who="admin",
+            action="SYSTEM_BACKUP_DELETE",
+            target_type="system_backup",
+            target_id=payload.backup_id,
+            before_json=json.dumps({"filename": deleted.filename}, ensure_ascii=True),
+            after_json=None,
+            reason="manual image backup delete",
+        )
+    )
+    db.commit()
+    return AdminSystemBackupDeleteResponse(ok=True, deleted=_serialize_backup_item(deleted))
 
 
 @router.post("/admin/system-backups/upload", response_model=AdminSystemBackupUploadResponse)
