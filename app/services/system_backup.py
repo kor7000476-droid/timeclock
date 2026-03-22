@@ -32,6 +32,7 @@ class BackupItem:
     covered_end: str
     created_at: str
     size_bytes: int
+    target: Optional[str]
     path: Path
 
 
@@ -73,6 +74,14 @@ def recovery_backup_dir() -> Path:
     return (backup_root() / "recovery").resolve()
 
 
+def software_backup_root_dir() -> Path:
+    return (backup_root() / "image").resolve()
+
+
+def software_backup_dir(target: str) -> Path:
+    return (software_backup_root_dir() / target).resolve()
+
+
 def _restore_sentinel_path() -> Path:
     return (backup_root() / ".restore_in_progress").resolve()
 
@@ -84,6 +93,7 @@ def _tmp_dir() -> Path:
 def ensure_backup_dirs() -> None:
     annual_backup_dir().mkdir(parents=True, exist_ok=True)
     recovery_backup_dir().mkdir(parents=True, exist_ok=True)
+    software_backup_root_dir().mkdir(parents=True, exist_ok=True)
     _tmp_dir().mkdir(parents=True, exist_ok=True)
 
 
@@ -189,6 +199,19 @@ def _manifest(
     }
 
 
+def _software_manifest(*, target: str, included_files: list[str]) -> dict[str, Any]:
+    now_et = datetime.now(EASTERN_TZ)
+    return {
+        "kind": "IMAGE",
+        "target": target,
+        "backup_year": now_et.year,
+        "covered_start": now_et.date().isoformat(),
+        "covered_end": now_et.date().isoformat(),
+        "created_at": now_et.isoformat(),
+        "files": included_files,
+    }
+
+
 def _safe_backup_id(path: Path) -> str:
     return path.relative_to(backup_root()).as_posix()
 
@@ -213,6 +236,12 @@ def _recovery_archive_name(covered_start: date, covered_end: date) -> str:
     return f"{start_part}-{end_part}.zip"
 
 
+def _software_archive_name(target: str, now_et: Optional[datetime] = None) -> str:
+    now_local = now_et.astimezone(EASTERN_TZ) if now_et else datetime.now(EASTERN_TZ)
+    stamp = now_local.strftime("%Y%m%d_%H%M%S")
+    return f"{target}_software_image_backup_{stamp}.zip"
+
+
 def _write_zip(zip_path: Path, *, sqlite_file: Path, manifest: dict[str, Any]) -> None:
     zip_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_zip = zip_path.with_suffix(zip_path.suffix + ".tmp")
@@ -220,6 +249,18 @@ def _write_zip(zip_path: Path, *, sqlite_file: Path, manifest: dict[str, Any]) -
         tmp_zip.unlink()
     with ZipFile(tmp_zip, "w", compression=ZIP_DEFLATED) as zf:
         zf.write(sqlite_file, arcname=manifest["db_filename"])
+        zf.writestr("manifest.json", json.dumps(manifest, ensure_ascii=True, indent=2))
+    tmp_zip.replace(zip_path)
+
+
+def _write_software_zip(zip_path: Path, *, manifest: dict[str, Any], entries: list[tuple[Path, str]]) -> None:
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_zip = zip_path.with_suffix(zip_path.suffix + ".tmp")
+    if tmp_zip.exists():
+        tmp_zip.unlink()
+    with ZipFile(tmp_zip, "w", compression=ZIP_DEFLATED) as zf:
+        for src_path, arcname in entries:
+            zf.write(src_path, arcname=arcname)
         zf.writestr("manifest.json", json.dumps(manifest, ensure_ascii=True, indent=2))
     tmp_zip.replace(zip_path)
 
@@ -253,15 +294,25 @@ def _validate_backup_archive(zip_path: Path) -> dict[str, Any]:
                 manifest = json.load(fh)
         except KeyError as exc:
             raise RuntimeError("backup archive missing manifest.json") from exc
-        db_filename = str(manifest.get("db_filename") or "").strip()
-        if not db_filename:
-            raise RuntimeError("backup manifest missing db filename")
         names = set(zf.namelist())
-        if db_filename not in names:
-            raise RuntimeError("backup payload missing sqlite database")
     kind = str(manifest.get("kind") or "").strip().upper()
-    if kind not in {"ANNUAL", "RECOVERY"}:
+    if kind not in {"ANNUAL", "RECOVERY", "IMAGE"}:
         raise RuntimeError("unsupported backup kind")
+    if kind == "IMAGE":
+        target = str(manifest.get("target") or "").strip().lower()
+        if target not in {"t", "time", "cloudfront"}:
+            raise RuntimeError("backup manifest missing target")
+        files = manifest.get("files") or []
+        if not isinstance(files, list) or not files:
+            raise RuntimeError("backup manifest missing files")
+        if not any(str(name).startswith("payload/") for name in names):
+            raise RuntimeError("backup payload missing image files")
+        return manifest
+    db_filename = str(manifest.get("db_filename") or "").strip()
+    if not db_filename:
+        raise RuntimeError("backup manifest missing db filename")
+    if db_filename not in names:
+        raise RuntimeError("backup payload missing sqlite database")
     try:
         int(manifest.get("backup_year") or 0)
     except Exception as exc:
@@ -294,6 +345,7 @@ def _build_backup_item(path: Path) -> BackupItem:
         covered_end=str(manifest.get("covered_end") or ""),
         created_at=str(manifest.get("created_at") or datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat()),
         size_bytes=stat.st_size,
+        target=(str(manifest.get("target") or "").strip().lower() or None),
         path=path,
     )
 
@@ -302,6 +354,18 @@ def _replace_recovery_archive(item: BackupItem) -> None:
     for existing in recovery_backup_dir().glob("*.zip"):
         if existing.resolve() != item.path.resolve():
             existing.unlink(missing_ok=True)
+
+
+def _prune_software_archives(*, target: str, max_keep: int = 3) -> None:
+    folder = software_backup_dir(target)
+    folder.mkdir(parents=True, exist_ok=True)
+    items = sorted(
+        folder.glob("*.zip"),
+        key=lambda candidate: candidate.stat().st_mtime,
+        reverse=True,
+    )
+    for candidate in items[max_keep:]:
+        candidate.unlink(missing_ok=True)
 
 
 def _prune_old_archives(*, current_year: int) -> None:
@@ -318,7 +382,13 @@ def _prune_old_archives(*, current_year: int) -> None:
 def list_backups() -> list[BackupItem]:
     ensure_backup_dirs()
     items: list[BackupItem] = []
-    for folder in (annual_backup_dir(), recovery_backup_dir()):
+    folders = [annual_backup_dir(), recovery_backup_dir()]
+    software_root = software_backup_root_dir()
+    if software_root.exists():
+        for candidate in software_root.iterdir():
+            if candidate.is_dir():
+                folders.append(candidate)
+    for folder in folders:
         for zip_path in folder.glob("*.zip"):
             try:
                 items.append(_build_backup_item(zip_path))
@@ -386,6 +456,64 @@ def create_backup_set(*, now_et: Optional[datetime] = None, annual_years: Option
     return BackupRunResult(annual=annual_item, recovery=recovery_item)
 
 
+def _software_backup_entries() -> list[tuple[Path, str]]:
+    root = _project_root()
+    entries: list[tuple[Path, str]] = []
+    include_paths = [
+        root / "app" / "api",
+        root / "app" / "core",
+        root / "app" / "db",
+        root / "app" / "services",
+        root / "app" / "templates",
+        root / "app" / "static",
+        root / "bin",
+        root / "requirements.txt",
+        root / "Dockerfile",
+        root / "docker-compose.yml",
+        root / ".env",
+    ]
+    seen: set[str] = set()
+    for include_path in include_paths:
+        if not include_path.exists():
+            continue
+        if include_path.is_dir():
+            for src in sorted(p for p in include_path.rglob("*") if p.is_file()):
+                rel = src.relative_to(root).as_posix()
+                arcname = f"payload/{rel}"
+                if arcname in seen:
+                    continue
+                seen.add(arcname)
+                entries.append((src, arcname))
+        else:
+            rel = include_path.relative_to(root).as_posix()
+            arcname = f"payload/{rel}"
+            if arcname in seen:
+                continue
+            seen.add(arcname)
+            entries.append((include_path, arcname))
+    return entries
+
+
+def create_software_backup(target: str, *, now_et: Optional[datetime] = None) -> BackupItem:
+    normalized_target = (target or "").strip().lower()
+    if normalized_target not in {"t", "time", "cloudfront"}:
+        raise RuntimeError("unsupported software backup target")
+    ensure_backup_dirs()
+    now_local = now_et.astimezone(EASTERN_TZ) if now_et else datetime.now(EASTERN_TZ)
+    entries = _software_backup_entries()
+    if not entries:
+        raise RuntimeError("software backup source files not found")
+    included_files = [arcname.removeprefix("payload/") for _, arcname in entries]
+    manifest = _software_manifest(target=normalized_target, included_files=included_files)
+    dest_dir = software_backup_dir(normalized_target)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = (dest_dir / _software_archive_name(normalized_target, now_local)).resolve()
+    _write_software_zip(dest_path, manifest=manifest, entries=entries)
+    item = _build_backup_item(dest_path)
+    _prune_software_archives(target=normalized_target)
+    return item
+
+
 def _resolve_backup_path(backup_id: str) -> Path:
     candidate = (backup_root() / backup_id).resolve()
     if backup_root() not in candidate.parents and candidate != backup_root():
@@ -398,6 +526,23 @@ def _resolve_backup_path(backup_id: str) -> Path:
 def restore_backup(backup_id: str) -> BackupItem:
     zip_path = _resolve_backup_path(backup_id)
     manifest = _load_manifest(zip_path)
+    kind = str(manifest.get("kind") or "").strip().upper()
+    if kind == "IMAGE":
+        root = _project_root()
+        with _restore_guard():
+            with ZipFile(zip_path, "r") as zf:
+                for member in zf.infolist():
+                    name = member.filename
+                    if not name.startswith("payload/") or name.endswith("/"):
+                        continue
+                    relative_name = name.removeprefix("payload/")
+                    destination = (root / relative_name).resolve()
+                    if root not in destination.parents and destination != root:
+                        raise RuntimeError("invalid image backup entry")
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    with zf.open(member, "r") as src_fh, open(destination, "wb") as dst_fh:
+                        shutil.copyfileobj(src_fh, dst_fh)
+        return _build_backup_item(zip_path)
     db_filename = str(manifest.get("db_filename") or "").strip()
     if not db_filename:
         raise RuntimeError("backup manifest missing db filename")
@@ -436,17 +581,25 @@ def import_backup_archive(src_zip: Path) -> BackupItem:
     ensure_backup_dirs()
     manifest = _validate_backup_archive(src_zip)
     kind = str(manifest.get("kind") or "").strip().upper()
-    backup_year = int(manifest.get("backup_year") or 0)
-    covered_start = date.fromisoformat(str(manifest.get("covered_start")))
-    covered_end = date.fromisoformat(str(manifest.get("covered_end")))
-
-    if kind == "ANNUAL":
-        dest_path = (annual_backup_dir() / _annual_archive_name(backup_year)).resolve()
+    if kind == "IMAGE":
+        target = str(manifest.get("target") or "").strip().lower()
+        created_at_raw = str(manifest.get("created_at") or "").strip()
+        try:
+            created_at = datetime.fromisoformat(created_at_raw)
+        except Exception:
+            created_at = datetime.now(EASTERN_TZ)
+        dest_path = (software_backup_dir(target) / _software_archive_name(target, created_at)).resolve()
     else:
-        if src_zip.name == _pre_restore_archive_name():
-            dest_path = (recovery_backup_dir() / _pre_restore_archive_name()).resolve()
+        backup_year = int(manifest.get("backup_year") or 0)
+        covered_start = date.fromisoformat(str(manifest.get("covered_start")))
+        covered_end = date.fromisoformat(str(manifest.get("covered_end")))
+        if kind == "ANNUAL":
+            dest_path = (annual_backup_dir() / _annual_archive_name(backup_year)).resolve()
         else:
-            dest_path = (recovery_backup_dir() / _recovery_archive_name(covered_start, covered_end)).resolve()
+            if src_zip.name == _pre_restore_archive_name():
+                dest_path = (recovery_backup_dir() / _pre_restore_archive_name()).resolve()
+            else:
+                dest_path = (recovery_backup_dir() / _recovery_archive_name(covered_start, covered_end)).resolve()
 
     tmp_dest = dest_path.with_suffix(dest_path.suffix + ".upload")
     if tmp_dest.exists():
@@ -457,6 +610,8 @@ def import_backup_archive(src_zip: Path) -> BackupItem:
     item = _build_backup_item(dest_path)
     if kind == "RECOVERY":
         _replace_recovery_archive(item)
-    else:
+    elif kind == "ANNUAL":
         _prune_old_archives(current_year=datetime.now(EASTERN_TZ).year)
+    elif kind == "IMAGE" and item.target:
+        _prune_software_archives(target=item.target)
     return item

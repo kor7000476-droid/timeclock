@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Optional
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from openpyxl import Workbook
 from sqlalchemy import delete, func, or_, select
@@ -43,6 +43,8 @@ from app.api.schemas import (
     AdminSystemBackupRestoreResponse,
     AdminSystemBackupRunRequest,
     AdminSystemBackupRunResponse,
+    AdminSoftwareBackupRunRequest,
+    AdminSoftwareBackupRunResponse,
     AdminSystemBackupUploadResponse,
     EmailCsvRequest,
     EmployeeBulkImportResponse,
@@ -72,7 +74,7 @@ from app.services.mailer import MailerError, send_email_with_attachments
 from app.services.admin_auth import change_admin_pin as _change_admin_pin
 from app.services.admin_auth import verify_admin_pin as _verify_admin_pin
 from app.services.state_machine import StateError, allowed_events_for_status, apply_event, infer_state
-from app.services.system_backup import BackupItem, create_backup_set, import_backup_archive, list_backups, restore_backup, restore_in_progress
+from app.services.system_backup import BackupItem, create_backup_set, create_software_backup, import_backup_archive, list_backups, restore_backup, restore_in_progress
 
 router = APIRouter(prefix="/api")
 
@@ -256,7 +258,19 @@ def _serialize_backup_item(item: BackupItem) -> AdminSystemBackupItem:
         covered_end=item.covered_end,
         created_at=item.created_at,
         size_bytes=item.size_bytes,
+        target=item.target,
     )
+
+
+def _detect_software_backup_target(host: str) -> Optional[str]:
+    value = (host or "").strip().lower().split(":", 1)[0]
+    if value == "t.6788choi.synology.me":
+        return "t"
+    if value == "time.6788choi.synology.me":
+        return "time"
+    if value == "d3tht40u4ejs2q.cloudfront.net":
+        return "cloudfront"
+    return None
 
 
 _EMPLOYEE_CODE_PATTERN = re.compile(r"^([A-Z])(\d{4})$")
@@ -377,14 +391,39 @@ def admin_run_system_backup(
     )
 
 
+@router.post("/admin/system-backups/software/run", response_model=AdminSoftwareBackupRunResponse)
+def admin_run_software_backup(
+    payload: AdminSoftwareBackupRunRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> AdminSoftwareBackupRunResponse:
+    require_admin(db, payload.admin_pin)
+    _require_system_backup_password(payload.backup_password)
+    current_target = _detect_software_backup_target(request.headers.get("host", ""))
+    if current_target is None:
+        raise HTTPException(status_code=400, detail="unknown software backup host")
+    if payload.target != current_target:
+        raise HTTPException(status_code=400, detail=f"software backup is allowed only for current host target: {current_target}")
+    created = create_software_backup(payload.target)
+    return AdminSoftwareBackupRunResponse(ok=True, created=_serialize_backup_item(created))
+
+
 @router.post("/admin/system-backups/restore", response_model=AdminSystemBackupRestoreResponse)
 def admin_restore_system_backup(
     payload: AdminSystemBackupRestoreRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> AdminSystemBackupRestoreResponse:
     require_admin(db, payload.admin_pin)
     _require_system_backup_password(payload.backup_password)
     _ensure_system_writes_available()
+    item = next((candidate for candidate in list_backups() if candidate.backup_id == payload.backup_id), None)
+    if item is None:
+        raise HTTPException(status_code=404, detail="backup not found")
+    if (item.kind or "").strip().upper() == "IMAGE":
+        current_target = _detect_software_backup_target(request.headers.get("host", ""))
+        if current_target is None or item.target != current_target:
+            raise HTTPException(status_code=400, detail="image backup restore is allowed only for current host target")
     restored = restore_backup(payload.backup_id)
     db.add(
         AuditLog(

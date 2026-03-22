@@ -237,6 +237,7 @@ class AdminSystemBackupItem(BaseModel):
     covered_end: str
     created_at: str
     size_bytes: int
+    target: Optional[str] = None
 
 
 class AdminSystemBackupListResponse(BaseModel):
@@ -252,6 +253,17 @@ class AdminSystemBackupRunResponse(BaseModel):
     ok: bool
     annual: AdminSystemBackupItem
     recovery: AdminSystemBackupItem
+
+
+class AdminSoftwareBackupRunRequest(BaseModel):
+    admin_pin: str
+    backup_password: str
+    target: Literal["t", "time", "cloudfront"]
+
+
+class AdminSoftwareBackupRunResponse(BaseModel):
+    ok: bool
+    created: AdminSystemBackupItem
 
 
 class AdminSystemBackupRestoreRequest(BaseModel):
