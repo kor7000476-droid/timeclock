@@ -1,6 +1,6 @@
 {
-  "name": "Timeclock",
-  "short_name": "TIME",
+  "name": "TLJ-AWS",
+  "short_name": "TLJ-AWS",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
